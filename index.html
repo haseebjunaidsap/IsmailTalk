@@ -1,0 +1,958 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Talk with Pip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Andika:wght@400;700&display=swap">
+<style>
+  :root{
+    --sky:#DDF1FF; --sky2:#C4E6FF; --ink:#1E2A4A; --ink-soft:#4A5878;
+    --sun:#FFC93C; --sun-deep:#E8A800; --coral:#FF7A59; --coral-deep:#E4573A;
+    --leaf:#2FB67C; --leaf-deep:#1E9463; --paper:#FFFFFF; --kid:#FFEFB8; --line:#B9D8F2;
+    --display:"Baloo 2","Trebuchet MS","Comic Sans MS",system-ui,sans-serif;
+    --body:"Andika","Verdana","Segoe UI",system-ui,sans-serif;
+    color-scheme:light;
+  }
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--sky);color:var(--ink);font-family:var(--body);font-size:18px;
+    background-image:
+      radial-gradient(ellipse 180px 60px at 12% 14%, #fff9 60%, transparent 62%),
+      radial-gradient(ellipse 240px 70px at 88% 30%, #fff8 60%, transparent 62%),
+      radial-gradient(ellipse 160px 50px at 30% 88%, #fff7 60%, transparent 62%);
+    background-attachment:fixed;
+  }
+  button,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:3px solid var(--coral-deep);outline-offset:3px}
+
+  .app{height:100%;display:flex;flex-direction:column;max-width:760px;margin:0 auto;padding-inline:16px;box-sizing:border-box}
+
+  /* Top bar */
+  .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-block:12px 8px}
+  .brand{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:.2px;margin-right:auto;line-height:1}
+  .brand span{color:var(--coral-deep)}
+  .pill{display:inline-flex;align-items:center;gap:6px;background:var(--paper);border:2px solid var(--line);border-radius:999px;padding:4px 12px;font-family:var(--display);font-weight:700;font-size:17px}
+  .pill svg{width:22px;height:22px}
+  .stars.pop{animation:pop .5s ease}
+  @keyframes pop{40%{transform:scale(1.25)}}
+  .iconbtn{background:var(--paper);border:2px solid var(--line);border-radius:999px;width:42px;height:42px;display:grid;place-items:center}
+  .iconbtn svg{width:22px;height:22px}
+
+  /* Speed */
+  .speed{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding-bottom:8px}
+  .speed .lbl{font-family:var(--display);font-weight:700;font-size:15px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.8px;margin-right:2px}
+  .speed button{border:2px solid var(--line);background:var(--paper);border-radius:14px;padding:5px 10px;font-family:var(--display);font-weight:700;font-size:15px;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.1}
+  .speed button .dots{display:flex;gap:2px}
+  .speed button .dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+  .speed button .dots i.on{background:var(--ink)}
+  .speed button[aria-pressed="true"]{background:var(--sun);border-color:var(--sun-deep)}
+  .settings{margin-left:auto;display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;font-size:14px;color:var(--ink-soft)}
+  .settings label{display:flex;align-items:center;gap:6px}
+  .settings select{max-width:170px;border:2px solid var(--line);border-radius:10px;background:var(--paper);padding:4px 6px;font-size:14px}
+  .settings input[type=checkbox]{width:18px;height:18px;accent-color:var(--leaf)}
+
+  /* Your-turn bar */
+  .listen{display:flex;align-items:center;gap:10px;padding:6px 14px 8px;font-family:var(--display);font-weight:700;font-size:16px;color:var(--leaf-deep)}
+  .listen .ear{width:12px;height:12px;border-radius:50%;background:var(--leaf);flex:none}
+  .listen.mic-live .ear{animation:pulse 1s infinite}
+  .listen .bar{flex:1;height:8px;border-radius:99px;background:#E4F1FB;overflow:hidden;min-width:60px}
+  .listen .bar b{display:block;height:100%;width:100%;background:var(--sun);border-radius:99px}
+
+  /* Stage */
+  .stage{flex:1;min-height:0;display:flex;flex-direction:column;background:#ffffffb3;border:3px solid var(--paper);border-radius:28px;overflow:hidden}
+  .buddybar{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:2px dashed var(--line)}
+  .pip{width:72px;height:72px;flex:none}
+  .pip.big{width:150px;height:150px}
+  .pip .mouth{transform-origin:60px 78px;transition:transform .12s}
+  .pip.talking .mouth{animation:talk .28s infinite alternate}
+  @keyframes talk{from{transform:scaleY(.35)}to{transform:scaleY(1.15)}}
+  .pip .lids{transform-origin:60px 52px;animation:blink 4.5s infinite}
+  @keyframes blink{0%,94%,100%{transform:scaleY(0)}96%{transform:scaleY(1)}}
+  .pip.bounce{animation:bob 1.6s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(-5px)}}
+  .buddymeta{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .buddymeta b{font-family:var(--display);font-size:22px;line-height:1}
+  .topic{font-size:15px;color:var(--ink-soft)}
+  .topic em{font-style:normal;font-weight:700;color:var(--leaf-deep)}
+  .mode{margin-left:auto;font-size:13px;color:var(--ink-soft);text-align:right}
+
+  .chat{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:12px}
+  .msg{max-width:86%;padding:12px 16px;border-radius:22px;line-height:1.45;font-size:21px;box-shadow:0 2px 0 #0000000d}
+  .msg.pip-msg{align-self:flex-start;background:var(--paper);border:2px solid var(--line);border-bottom-left-radius:6px}
+  .msg.kid{align-self:flex-end;background:var(--kid);border:2px solid #F3D675;border-bottom-right-radius:6px}
+  .msg .seg{transition:background .2s;border-radius:6px}
+  .msg .seg.now{background:#FFE58A}
+  .msg .again{display:inline-flex;align-items:center;gap:4px;margin-top:6px;border:none;background:none;color:var(--coral-deep);font-family:var(--display);font-weight:700;font-size:15px;padding:0}
+  .msg .again svg{width:18px;height:18px}
+  .earned{align-self:flex-end;font-family:var(--display);font-weight:700;color:var(--leaf-deep);font-size:16px;display:flex;gap:4px;align-items:center}
+  .earned svg{width:18px;height:18px}
+  .typing{display:inline-flex;gap:6px;padding:4px 2px}
+  .typing i{width:10px;height:10px;border-radius:50%;background:var(--coral);animation:dot 1s infinite}
+  .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+  @keyframes dot{50%{transform:translateY(-6px);opacity:.5}}
+
+  /* Starters + input */
+  .starters{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 8px}
+  .starters:empty{display:none}
+  .starters .hint{width:100%;font-size:14px;color:var(--ink-soft)}
+  .starters button{border:2px dashed var(--coral);background:#FFF1EC;border-radius:16px;padding:6px 12px;font-size:17px;color:var(--ink)}
+  .composer{display:flex;gap:8px;align-items:flex-end;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));border-top:2px dashed var(--line);background:var(--paper)}
+  .composer textarea{flex:1;min-width:0;resize:none;border:3px solid var(--line);border-radius:18px;padding:10px 14px;font-size:20px;line-height:1.35;max-height:130px;background:#FBFDFF}
+  .composer textarea:focus{border-color:var(--sun-deep);outline:none}
+  .send{background:var(--coral);border:none;color:#fff;border-radius:18px;padding:0 18px;height:52px;font-family:var(--display);font-weight:800;font-size:20px;box-shadow:0 4px 0 var(--coral-deep)}
+  .send:active{transform:translateY(3px);box-shadow:0 1px 0 var(--coral-deep)}
+  .send:disabled{opacity:.5}
+  .mic{background:var(--sun);border:none;border-radius:50%;width:52px;height:52px;display:grid;place-items:center;box-shadow:0 4px 0 var(--sun-deep);flex:none}
+  .mic svg{width:26px;height:26px}
+  .mic.call{animation:pulse 1.2s infinite;outline:4px solid #2FB67C55}
+  .kbhint{display:flex;align-items:center;gap:8px;padding:0 14px 8px;font-size:15px;color:var(--ink-soft)}
+  .kbhint svg{width:20px;height:20px;flex:none}
+  .mic.on{background:var(--leaf);box-shadow:0 4px 0 var(--leaf-deep);animation:pulse 1s infinite}
+  @keyframes pulse{50%{transform:scale(1.08)}}
+
+  /* Welcome */
+  .welcome{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;padding:20px 14px}
+  .welcome h1{font-family:var(--display);font-weight:800;font-size:clamp(30px,7vw,46px);line-height:1.05;margin:0;text-wrap:balance}
+  .welcome p{margin:0;font-size:20px;color:var(--ink-soft);max-width:30ch}
+  .ages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;width:100%;max-width:460px;margin-top:6px}
+  .age{aspect-ratio:1/1.15;max-width:100%;border:none;border-radius:50% 50% 46% 46%;font-family:var(--display);font-weight:800;font-size:clamp(34px,9vw,52px);color:#fff;position:relative;box-shadow:inset -8px -10px 0 #00000014;transition:transform .15s}
+  .age small{display:block;font-size:14px;font-weight:700;margin-top:-10px;opacity:.9}
+  .age:hover{transform:translateY(-4px) rotate(-2deg)}
+  .age:nth-child(1){background:var(--coral)}.age:nth-child(2){background:var(--leaf)}
+  .age:nth-child(3){background:#5B8DEF}.age:nth-child(4){background:#B56BD8}
+  .grownup{font-size:14px;color:var(--ink-soft);max-width:44ch}
+
+  .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:14px;font-size:15px;max-width:calc(100% - 48px);text-align:center;z-index:5}
+
+  @media (max-width:520px){
+    .brand{font-size:22px}
+    .speed .lbl{width:100%}
+    .speed button{padding:4px 7px;font-size:13px}
+    .settings{margin-left:0;width:100%}
+    .msg{font-size:19px;max-width:92%}
+    .pip{width:56px;height:56px}
+    .pip.big{width:120px;height:120px}
+    .send{padding:0 14px;font-size:18px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">Talk with <span>Pip</span></div>
+    <div class="pill stars" id="stars" title="Stars for whole sentences">
+      <svg viewBox="0 0 24 24"><path fill="#FFC93C" stroke="#E8A800" stroke-width="1.5" d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/></svg>
+      <span id="starCount">0</span>
+    </div>
+    <button class="iconbtn" id="muteBtn" aria-label="Turn Pip's voice off" title="Voice on/off">
+      <svg id="spkOn" viewBox="0 0 24 24" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-linecap="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#FFC93C"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg>
+      <svg id="spkOff" viewBox="0 0 24 24" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-linecap="round" hidden><path d="M4 9h4l5-4v14l-5-4H4z" fill="#ddd"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+    </button>
+  </header>
+
+  <div class="speed" role="group" aria-label="How fast Pip talks">
+    <span class="lbl">Talking speed</span>
+    <div id="speedBtns" style="display:contents"></div>
+    <div class="settings">
+      <label for="voiceSel" id="voiceWrap">Voice <select id="voiceSel"></select></label>
+      <label for="waitSel">Nudge after
+        <select id="waitSel">
+          <option value="3">3 sec</option><option value="5">5 sec</option><option value="8">8 sec</option>
+          <option value="10">10 sec</option><option value="15">15 sec</option><option value="20">20 sec</option><option value="0">Never</option>
+        </select>
+      </label>
+      <label for="autoMic" id="autoMicWrap"><input type="checkbox" id="autoMic"> Mic on after Pip talks</label>
+      <label for="pauseSel" id="pauseWrap">Wait for pauses
+        <select id="pauseSel"><option value="short">Short</option><option value="medium">Medium</option><option value="long">Long</option></select>
+      </label>
+    </div>
+  </div>
+
+  <main class="stage">
+    <section class="welcome" id="welcome">
+      <svg class="pip big bounce" id="pipBig" viewBox="0 0 120 120" aria-hidden="true"></svg>
+      <h1>Hi! I'm Pip.<br>How old are you?</h1>
+      <p>Tap your age and let's talk!</p>
+      <div class="ages" id="ages">
+        <button class="age" data-age="5">5<small>years</small></button>
+        <button class="age" data-age="6">6<small>years</small></button>
+        <button class="age" data-age="7">7<small>years</small></button>
+        <button class="age" data-age="8">8<small>years</small></button>
+      </div>
+      <p class="grownup">For grown-ups: Pip asks Claude for each reply, so the first message asks you to allow that. Turn the sound up and pick a talking speed above.</p>
+    </section>
+
+    <section id="chatView" hidden style="display:flex;flex-direction:column;flex:1;min-height:0">
+      <div class="buddybar">
+        <svg class="pip" id="pipSmall" viewBox="0 0 120 120" aria-hidden="true"></svg>
+        <div class="buddymeta">
+          <b>Pip</b>
+          <span class="topic" id="topicLine">Getting to know you</span>
+        </div>
+        <div class="mode" id="modeLine"></div>
+      </div>
+      <div class="chat" id="chat" aria-live="polite"></div>
+      <div class="starters" id="starters"></div>
+      <div class="listen" id="listen" hidden>
+        <span class="ear"></span><span id="listenText">Your turn!</span>
+        <span class="bar" id="waitBar"><b id="waitFill"></b></span>
+      </div>
+      <div class="kbhint" id="kbHint" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3" fill="#FFC93C"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
+        <span>To talk: tap the box below, then tap the <b>microphone key</b> on the keyboard. Pip sends it when you stop.</span>
+      </div>
+      <div class="kbhint" id="frameNote" hidden><span><b>Grown-ups:</b> the Claude app blocks the microphone for pages like this. For hands-free talking, open the standalone Pip in Safari or Chrome.</span></div>
+      <form class="composer" id="composer">
+        <button type="button" class="mic" id="micBtn" aria-label="Talk to Pip (tap again when you are done)" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3" fill="#fff"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
+        </button>
+        <textarea id="input" rows="1" placeholder="Tell Pip in a whole sentence…" aria-label="Your message to Pip"></textarea>
+        <button class="send" id="sendBtn" type="submit">Send</button>
+      </form>
+    </section>
+  </main>
+  <div style="height:12px"></div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ---------- Pip drawing ---------- */
+const PIP_SVG = `
+  <ellipse cx="60" cy="112" rx="34" ry="5" fill="#1E2A4A" opacity=".12"/>
+  <path d="M60 10c8 0 12 8 10 14 16 4 34 18 34 44 0 26-20 40-44 40S16 94 16 68c0-26 18-40 34-44-2-6 2-14 10-14z" fill="#FF7A59"/>
+  <path d="M30 70c0 18 13 28 30 28s30-10 30-28" fill="#FFB199" opacity=".55"/>
+  <circle cx="44" cy="52" r="11" fill="#fff"/><circle cx="76" cy="52" r="11" fill="#fff"/>
+  <circle cx="46" cy="54" r="5.5" fill="#1E2A4A"/><circle cx="78" cy="54" r="5.5" fill="#1E2A4A"/>
+  <circle cx="48" cy="52" r="1.8" fill="#fff"/><circle cx="80" cy="52" r="1.8" fill="#fff"/>
+  <g class="lids"><rect x="32" y="40" width="24" height="24" rx="12" fill="#FF7A59"/><rect x="64" y="40" width="24" height="24" rx="12" fill="#FF7A59"/></g>
+  <circle cx="34" cy="70" r="5" fill="#FF4F7B" opacity=".35"/><circle cx="86" cy="70" r="5" fill="#FF4F7B" opacity=".35"/>
+  <g class="mouth"><path d="M50 72q10 12 20 0z" fill="#7A1E2C"/><path d="M54 78q6 4 12 0" fill="#FF8FA3"/></g>`;
+document.getElementById('pipBig').innerHTML = PIP_SVG;
+document.getElementById('pipSmall').innerHTML = PIP_SVG;
+const pips = [document.getElementById('pipBig'), document.getElementById('pipSmall')];
+const setTalking = on => pips.forEach(p => p.classList.toggle('talking', on));
+
+/* ---------- Settings ---------- */
+const SPEEDS = [
+  {label:'Very very slow', rate:0.5},
+  {label:'Very slow', rate:0.62},
+  {label:'Slow', rate:0.78},
+  {label:'Normal', rate:0.95},
+  {label:'Fast', rate:1.15},
+];
+const store = {
+  get(k){ try{ return localStorage.getItem(k) }catch(e){ return null } },
+  set(k,v){ try{ localStorage.setItem(k,v) }catch(e){} }
+};
+let speedIdx = Number(store.get('pip-speed') ?? 2); if(!(speedIdx>=0 && speedIdx<5)) speedIdx = 2;
+let muted = store.get('pip-muted') === '1';
+const speedBox = document.getElementById('speedBtns');
+SPEEDS.forEach((s,i) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.id = 'speed'+i;
+  b.innerHTML = `<span>${s.label}</span><span class="dots">${[0,1,2,3,4].map(d=>`<i class="${d<=i?'on':''}"></i>`).join('')}</span>`;
+  b.onclick = () => { speedIdx = i; store.set('pip-speed', i); paintSpeed(); if(lastPipText && !busy) sayAndWait(lastPipText, lastPipEl); };
+  speedBox.appendChild(b);
+});
+function paintSpeed(){ SPEEDS.forEach((_,i)=>document.getElementById('speed'+i).setAttribute('aria-pressed', String(i===speedIdx))) }
+paintSpeed();
+
+const muteBtn = document.getElementById('muteBtn');
+function paintMute(){
+  document.getElementById('spkOn').hidden = muted;
+  document.getElementById('spkOff').hidden = !muted;
+  muteBtn.setAttribute('aria-label', muted ? "Turn Pip's voice on" : "Turn Pip's voice off");
+}
+muteBtn.onclick = () => { muted = !muted; store.set('pip-muted', muted?'1':'0'); paintMute(); if(muted) stopSpeaking(); };
+paintMute();
+
+/* ---------- Voice (natural pacing) ---------- */
+const synth = window.speechSynthesis;
+const voiceSel = document.getElementById('voiceSel');
+let voices = [];
+const NICE = /(natural|neural|aria|jenny|ava|emma|samantha|google us english|google uk english female|serena|libby|sonia|karen|moira|tessa|zira)/i;
+function loadVoices(){
+  if(!synth) return;
+  voices = synth.getVoices().filter(v => /^en(-|_|$)/i.test(v.lang));
+  if(!voices.length) return;
+  voices.sort((a,b)=> (NICE.test(b.name)-NICE.test(a.name)) || (/en-US/i.test(b.lang)-/en-US/i.test(a.lang)));
+  const saved = store.get('pip-voice');
+  voiceSel.innerHTML = voices.map(v=>`<option value="${v.name.replace(/"/g,'&quot;')}">${v.name.replace(/Microsoft |Google /,'').slice(0,34)}</option>`).join('');
+  if(saved && voices.some(v=>v.name===saved)) voiceSel.value = saved;
+}
+if(synth){ loadVoices(); synth.onvoiceschanged = loadVoices; }
+voiceSel.onchange = () => { store.set('pip-voice', voiceSel.value); if(lastPipText && !busy) sayAndWait(lastPipText, lastPipEl); };
+if(!synth) voiceSel.parentElement.hidden = true;
+
+// Split text into phrases, each with its own pitch and a pause after it.
+function phrases(text){
+  const clean = text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'').replace(/\s+/g,' ').trim();
+  const sentences = clean.match(/[^.!?]+[.!?]*\s*/g) || [clean];
+  const out = [];
+  sentences.forEach(s => {
+    const end = (s.trim().slice(-1));
+    const parts = s.split(/(?<=,|;|—|:)\s+/);
+    parts.forEach((p,j) => {
+      const last = j === parts.length-1;
+      out.push({
+        text:p.trim(),
+        pitch: last && end==='?' ? 1.28 : last && end==='!' ? 1.22 : 1.12,
+        pause: last ? (end==='?' ? 650 : end==='!' ? 520 : 480) : 240
+      });
+    });
+  });
+  return out.filter(p=>p.text);
+}
+let speakToken = 0;
+function stopSpeaking(){ speakToken++; if(synth) synth.cancel(); setTalking(false); document.querySelectorAll('.seg.now').forEach(s=>s.classList.remove('now')); }
+function speak(text, bubble){
+  stopSpeaking();
+  stopListening();
+  if(muted || !synth) return Promise.resolve(true);
+  const token = speakToken;
+  const list = phrases(text);
+  const segs = bubble ? bubble.querySelectorAll('.seg') : [];
+  const rate = SPEEDS[speedIdx].rate;
+  const voice = voices.find(v=>v.name===voiceSel.value) || voices[0];
+  return new Promise(resolve => {
+    let i = 0;
+    const next = () => {
+      if(token !== speakToken) return resolve(false);
+      segs.forEach(s=>s.classList.remove('now'));
+      if(i >= list.length){ setTalking(false); return resolve(true); }
+      const ph = list[i];
+      const u = new SpeechSynthesisUtterance(ph.text);
+      if(voice) u.voice = voice;
+      u.lang = voice ? voice.lang : 'en-US';
+      u.rate = rate; u.pitch = ph.pitch; u.volume = 1;
+      // find the sentence span that contains this phrase
+      segs.forEach(s => { if(s.textContent.includes(ph.text)) s.classList.add('now') });
+      u.onstart = () => setTalking(true);
+      let done = false;
+      const finish = () => {
+        if(done) return; done = true;
+        clearTimeout(guard);
+        setTalking(false);
+        i++;
+        setTimeout(next, ph.pause / rate);   // slower speed = longer thinking pauses
+      };
+      u.onend = u.onerror = finish;
+      // Safety net: some phones never report that speech ended, which would leave Pip stuck.
+      const guard = setTimeout(() => { if(!done){ synth.cancel(); finish(); } }, (ph.text.length * 110) / rate + 2500);
+      synth.speak(u);
+    };
+    next();
+  });
+}
+
+/* ---------- Chat UI ---------- */
+const chat = document.getElementById('chat');
+const startersEl = document.getElementById('starters');
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('sendBtn');
+const starEl = document.getElementById('stars');
+let lastPipText = '', lastPipEl = null;
+
+function esc(s){ return s.replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) }
+function scrollDown(){ chat.scrollTop = chat.scrollHeight }
+
+function addPip(text, isNudge){
+  const el = document.createElement('div');
+  el.className = 'msg pip-msg';
+  const sentences = text.match(/[^.!?]+[.!?]*\s*/g) || [text];
+  el.innerHTML = sentences.map(s=>`<span class="seg">${esc(s)}</span>`).join('') +
+    `<br><button class="again" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg>Say it again</button>`;
+  el.querySelector('.again').onclick = () => { if(!busy) sayAndWait(text, el); };
+  chat.appendChild(el); scrollDown();
+  if(!isNudge){ lastPipText = text; lastPipEl = el; }
+  return el;
+}
+function addKid(text){
+  const el = document.createElement('div');
+  el.className = 'msg kid'; el.textContent = text;
+  chat.appendChild(el); scrollDown();
+}
+function addThinking(){
+  const el = document.createElement('div');
+  el.className = 'msg pip-msg';
+  el.innerHTML = '<span class="typing" aria-label="Pip is thinking"><i></i><i></i><i></i></span>';
+  chat.appendChild(el); scrollDown();
+  return el;
+}
+function giveStar(){
+  stars++;
+  document.getElementById('starCount').textContent = stars;
+  starEl.classList.remove('pop'); void starEl.offsetWidth; starEl.classList.add('pop');
+  const e = document.createElement('div');
+  e.className = 'earned';
+  e.innerHTML = '<svg viewBox="0 0 24 24"><path fill="#FFC93C" stroke="#E8A800" stroke-width="1.5" d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/></svg>Whole sentence! +1 star';
+  chat.appendChild(e); scrollDown();
+}
+function showStarters(list){
+  startersEl.innerHTML = '';
+  if(!list || !list.length) return;
+  const h = document.createElement('div'); h.className = 'hint'; h.textContent = 'Need help? Tap one and finish it:';
+  startersEl.appendChild(h);
+  list.slice(0,3).forEach(s => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = s;
+    b.onclick = () => {
+      const t = s.replace(/\s*(\.{3}|…|_+)\s*$/,'').trim() + ' ';
+      input.value = t; input.focus(); input.setSelectionRange(t.length, t.length); grow(); onKidActivity();
+    };
+    startersEl.appendChild(b);
+  });
+}
+let toastTimer;
+function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.hidden=true, 4200); }
+
+function grow(){ input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight,130)+'px' }
+input.addEventListener('input', () => { grow(); onKidActivity(); });
+input.addEventListener('keydown', e => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); document.getElementById('composer').requestSubmit(); } });
+
+/* ---------- Conversation state ---------- */
+let age = 6, stars = 0, busy = false;
+let turns = [];          // [{role, content}] kept by the page
+let sample = null, aiReady = false, aiFailed = false;
+
+const AGE_STYLE = {
+  5:{words:6,  note:'very simple words a 5-year-old knows, like talking to a kindergartner'},
+  6:{words:8,  note:'simple words, like talking to a first grader'},
+  7:{words:10, note:'simple words with a few fun new ones, like talking to a second grader'},
+  8:{words:12, note:'clear, lively words, like talking to a third grader; you may add one fun fact'},
+};
+function rules(){
+  const a = AGE_STYLE[age];
+  return `You are Pip, a friendly, bouncy little talking buddy in a speaking-practice app for a ${age}-year-old child. Your replies are read aloud by a text-to-speech voice.
+
+Your job: get the child talking in whole sentences, especially a shy child who doesn't like to talk. Be warm, excited, silly and kind. Never scold, never test, never say "wrong".
+
+How to talk:
+- Use ${a.note}. Keep every sentence ${a.words} words or fewer.
+- Reply with 2 or 3 short sentences. First react to what the child said with real excitement. Then end with exactly ONE easy, open question (what / which / why / how / tell me), never a yes-or-no question.
+- Use punctuation for natural speaking: commas for little pauses, "!" for excitement, "?" for questions. Words like "Wow," "Ooh," "Hmm," are welcome. No emoji, no lists, no asterisks.
+- Topics: in the first turns ask the child's name, then what they love. Then pick a fun topic from their answers (animals, dinosaurs, space, food, games, superheroes of their own invention, family pets, their favorite toy, weather, bugs, the ocean, drawing, sports, silly "what if" ideas). Stay on a topic for 3 to 5 questions, then gently move to a new one linked to something they said. Give options inside the question when it helps a shy child, e.g. "Would you rather have a dragon or a unicorn, and why?"
+- If the child answers with only yes, no, ok, maybe, idk, or one or two words: cheer warmly, then ask them to say it as a whole sentence and give one example sentence they could copy, e.g. "Can you say it in a whole sentence? Like, I like red because it is bright!"
+- If the child answered in a whole sentence, praise it specifically ("What a great sentence!") now and then, not every time.
+- If the child seems sad, scared, hurt, or says something worrying, be gentle and kind, and suggest they tell a grown-up they trust. Never ask for last names, addresses, school names, phone numbers or passwords. Keep everything child-safe.
+- The child's words often come from speech-to-text, so they may contain misheard words. Work out what they most likely meant and never mention spelling or mistakes.
+- If a note says the child was quiet for a while, be extra warm and make the next question very easy, with two fun choices.
+
+Reply with ONLY a JSON object, no other text:
+{"say": "what Pip says out loud", "topic": "2 to 3 word topic name", "starters": ["sentence starter 1...", "sentence starter 2...", "sentence starter 3..."]}
+"starters" are 3 short sentence beginnings the child could tap and finish to answer your question, written in the child's voice, each ending with "..." (for example "My favorite animal is...", "I like it because...").`;
+}
+
+function isShort(t){
+  const w = t.trim().split(/\s+/).filter(Boolean);
+  return w.length <= 2 || /^(yes|no|yeah|yep|yup|nope|nah|ok|okay|maybe|idk|i don'?t know|dunno|sure|fine|good|cool)[\s.!?]*$/i.test(t.trim());
+}
+function isWholeSentence(t){
+  const w = t.trim().split(/\s+/).filter(Boolean);
+  return w.length >= 4 && !isShort(t);
+}
+
+/* ---------- AI ---------- */
+(async () => {
+  try{ sample = window.claude ? await window.claude.use('sample') : null }catch(e){ sample = null }
+  aiReady = true;
+})();
+
+async function askAI(kidText, note){
+  const content = kidText == null
+    ? `(The child just chose age ${age} and tapped start. Say a happy hello, say your name is Pip, and ask the child's first name.)`
+    : `The child said: "${kidText}"` + (note ? `\n(${note})` : '');
+  turns.push({role:'user', content});
+  if(turns.length > 24) turns = turns.slice(-24);
+  while(turns[0] && turns[0].role !== 'user') turns.shift();
+  const res = await sample.json([{role:'user', content: rules()}, ...turns], {modelTier:'quick', cache:false});
+  const say = String(res && res.say || '').trim();
+  if(!say) throw {code:'empty_completion'};
+  turns.push({role:'assistant', content: say});
+  return {say, topic: res.topic ? String(res.topic) : '', starters: Array.isArray(res.starters) ? res.starters.map(String) : []};
+}
+
+
+async function quickJSON(prompt){ return sample.json(prompt, {modelTier:'quick', cache:false}); }
+
+/* Smart turn-taking: does the child sound finished? (true / false / null = not sure) */
+async function aiThinksDone(text){
+  if(aiFailed || !sample) return null;
+  const q = lastQuestion() || lastPipText;
+  const prompt = `A ${age}-year-old child is answering a question out loud in a talking app. Their words come from speech-to-text and may be cut off or slightly misheard.
+Question: "${q}"
+What the child has said so far: "${text}"
+They have just paused. Have they finished their answer, or are they probably still in the middle of a thought (an unfinished sentence, a list that is still going, "because" with no reason yet)? A short but complete answer counts as finished.
+Reply with only JSON: {"done": true} or {"done": false}`;
+  try{
+    const res = await Promise.race([quickJSON(prompt), new Promise(r => setTimeout(() => r(null), 3000))]);
+    if(res && typeof res.done === 'boolean') return res.done;
+  }catch(e){}
+  return null;
+}
+
+/* ---------- Simple mode (used when Claude can't be reached) ---------- */
+const OFF = {
+  stage:0, topicIdx:0, q:0, name:'',
+  topics:[
+    {name:'Animals', qs:['What animal do you like the most, and why?','What sound does that animal make? Can you tell me in a sentence?','If you had a pet, what would you name it?'], st:['My favorite animal is...','I like it because...','I would name my pet...']},
+    {name:'Food', qs:['What is the yummiest food in the whole world?','What food do you not like at all, and why?','If you made a silly sandwich, what would go in it?'], st:['The yummiest food is...','I do not like...','My silly sandwich has...']},
+    {name:'Space', qs:['If you flew a rocket, where would you go?','Who would you take with you on your rocket?','What would you pack for space?'], st:['I would fly to...','I would take...','I would pack...']},
+    {name:'Playtime', qs:['What is your favorite game to play?','Who do you like to play with?','What is the best toy you have?'], st:['My favorite game is...','I like to play with...','My best toy is...']},
+  ]
+};
+function offlineReply(kidText){
+  const short = kidText != null && isShort(kidText);
+  if(kidText == null) return {say:"Hi there! I'm Pip. I love to chat! What is your name?", topic:'Getting to know you', starters:['My name is...']};
+  if(short) return {say:`Ooh, thank you! Can you tell me in a whole sentence? Like this: ${currentStarter()}`, topic:'', starters:[currentStarter()]};
+  if(OFF.stage === 0){
+    const m = kidText.match(/(?:name is|i am|i'm|call me)\s+([A-Za-z]+)/i);
+    OFF.name = m ? m[1] : '';
+    OFF.stage = 1;
+    return {say:`${OFF.name ? 'Hi, '+OFF.name+'!' : 'Hooray!'} What a lovely name! What do you like best: animals, food, space, or playing games?`, topic:'Getting to know you', starters:['I like animals because...','I like space because...','I like games because...']};
+  }
+  if(OFF.stage === 1){
+    const t = kidText.toLowerCase();
+    OFF.topicIdx = /food|eat|pizza|cake/.test(t)?1 : /space|rocket|star|moon|planet/.test(t)?2 : /game|play|toy/.test(t)?3 : 0;
+    OFF.stage = 2; OFF.q = 0;
+  } else { OFF.q++; if(OFF.q >= 3){ OFF.topicIdx = (OFF.topicIdx+1)%OFF.topics.length; OFF.q = 0; } }
+  const T = OFF.topics[OFF.topicIdx];
+  const cheers = ['Wow, great sentence!','Ooh, I love that!','Yay, tell me more!','That is so cool!'];
+  return {say:`${cheers[Math.floor(Math.random()*cheers.length)]} ${T.qs[OFF.q]}`, topic:T.name, starters:[T.st[OFF.q]]};
+}
+function currentStarter(){
+  if(OFF.stage === 0) return 'My name is...';
+  if(OFF.stage === 1) return 'I like animals because...';
+  return OFF.topics[OFF.topicIdx].st[OFF.q];
+}
+
+/* ---------- Turn handling ---------- */
+async function pipTurn(kidText){
+  busy = true; sendBtn.disabled = true; showStarters([]);
+  const thinking = addThinking();
+  let reply;
+  let note = kidText != null && isShort(kidText)
+    ? 'This was a very short answer. Cheer, then kindly ask for a whole sentence and give one example sentence to copy.'
+    : '';
+  const meta = (lastMeta.how === 'voice' ? ' The child said this out loud (speech-to-text).' : '')
+    + (lastMeta.nudges >= 2 ? ' The child was quiet for a while before answering.' : '');
+  if(meta) note = (note ? note + ' ' : '') + meta.trim();
+  if(!aiFailed){
+    // wait briefly for the runtime to answer
+    for(let i=0; i<40 && !aiReady; i++) await new Promise(r=>setTimeout(r,100));
+    if(sample){
+      try{ reply = await askAI(kidText, note) }
+      catch(e){
+        turns.pop();
+        const code = e && e.code;
+        if(['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(code)){
+          aiFailed = true;
+          document.getElementById('modeLine').textContent = 'Simple mode';
+          toast("Pip is using simple mode because Claude isn't allowed here.");
+        } else if(code === 'rate_limited'){
+          toast('Pip needs a little rest. Try again in a minute.');
+        } else {
+          toast('Pip lost the words for a second. Using simple mode for this answer.');
+        }
+      }
+    } else {
+      aiFailed = true;
+      document.getElementById('modeLine').textContent = 'Simple mode';
+    }
+  }
+  if(!reply) reply = offlineReply(kidText);
+  thinking.remove();
+  if(reply.topic) document.getElementById('topicLine').innerHTML = 'Talking about <em>' + esc(reply.topic) + '</em>';
+  lastStarters = reply.starters || [];
+  nudges = 0;
+  const el = addPip(reply.say);
+  showStarters(reply.starters);
+  busy = false; sendBtn.disabled = false;
+  sayAndWait(reply.say, el);
+}
+
+/* ---------- Your turn: auto-listen + gentle nudges ---------- */
+const listenEl = document.getElementById('listen');
+const listenText = document.getElementById('listenText');
+const waitFill = document.getElementById('waitFill');
+const waitBar = document.getElementById('waitBar');
+const waitSel = document.getElementById('waitSel');
+const autoMicBox = document.getElementById('autoMic');
+let waitSec = Number(store.get('pip-wait') ?? 5); if(!(waitSec >= 0)) waitSec = 5;
+waitSel.value = String(waitSec); if(waitSel.value !== String(waitSec)){ waitSec = 5; waitSel.value = '5'; }
+waitSel.onchange = () => { waitSec = Number(waitSel.value); store.set('pip-wait', waitSec); if(!listenEl.hidden) armTimer(); };
+let autoMic = store.get('pip-automic') !== '0';
+autoMicBox.checked = autoMic;
+autoMicBox.onchange = () => {
+  autoMic = autoMicBox.checked; store.set('pip-automic', autoMic ? '1' : '0');
+  if(autoMic && !listenEl.hidden) startListening(); else if(!autoMic) stopListening();
+};
+let silenceTimer = null, nudges = 0, lastStarters = [];
+const MAX_NUDGES = 3;
+
+async function sayAndWait(text, el){
+  endWaiting();
+  const finished = await speak(text, el);
+  if(finished && !busy) startWaiting();
+}
+function startWaiting(){
+  listenEl.hidden = false;
+  paintListen();
+  if(autoMic) startListening();
+  armTimer();
+}
+function endWaiting(){
+  clearTimeout(silenceTimer); silenceTimer = null;
+  listenEl.hidden = true;
+  stopListening();
+}
+function armTimer(){
+  clearTimeout(silenceTimer); silenceTimer = null;
+  waitFill.style.transition = 'none'; waitFill.style.width = '100%';
+  const on = waitSec > 0 && nudges < MAX_NUDGES;
+  waitBar.hidden = !on;
+  if(!on) return;
+  void waitFill.offsetWidth;
+  waitFill.style.transition = `width ${waitSec}s linear`;
+  waitFill.style.width = '0%';
+  silenceTimer = setTimeout(nudge, waitSec * 1000);
+}
+function paintListen(){
+  const live = !!rec;
+  listenEl.classList.toggle('mic-live', live);
+  const tapMic = typeof needsTap !== 'undefined' && needsTap && micOK && !live;
+  if(typeof micBtn !== 'undefined') micBtn.classList.toggle('call', tapMic && !listenEl.hidden);
+  listenText.textContent = live ? 'Your turn! Pip is listening…'
+    : tapMic ? 'Your turn! Tap the green mic, then talk.'
+    : (typeof kbMode !== 'undefined' && kbMode) ? 'Your turn! Use the mic key on the keyboard.'
+    : 'Your turn!';
+}
+// Any sign of the child answering restarts the quiet timer.
+function onKidActivity(){ if(!listenEl.hidden) armTimer(); }
+
+function lastQuestion(){
+  const qs = (lastPipText.match(/[^.!?]+\?/g) || []);
+  return qs.length ? qs[qs.length-1].trim() : '';
+}
+function pick(a){ return a[Math.floor(Math.random()*a.length)] }
+function nudge(){
+  silenceTimer = null;
+  if(busy || listenEl.hidden) return;
+  if(rec && heard.trim()){ armTimer(); return; }   // child is mid-answer: let them finish
+  nudges++;
+  const starter = (lastStarters[0] || '').replace(/\s*(\.{3}|…|_+)\s*$/,'').trim();
+  let say;
+  if(input.value.trim()){
+    say = pick(["Ooh, great start! Tap Send when you are ready.", "I see your words! Keep going, then tap Send.", "Nice! Finish your sentence and send it to me."]);
+  } else if(nudges === 1){
+    say = pick(["Your turn! I would love to hear you. Just talk, I'm listening!", "I'm all ears! What do you think?", "Take your time. I'm right here, listening!"])
+      + (starter ? ` You can start with, ${starter}...` : '');
+  } else if(nudges === 2){
+    say = pick(["It's okay if you're not sure! Any answer is a good answer.", "There's no wrong answer, friend! Just tell me what you think.", "You can do it! Even a silly answer is great."])
+      + (lastStarters.length ? " You can tap a helper button to start." : '');
+  } else {
+    const q = lastQuestion();
+    say = q ? `Let me ask again. ${q}` : "I'm still here! Tell me anything you like.";
+  }
+  const el = addPip(say, true);
+  sayAndWait(say, el);
+}
+
+let lastMeta = {how:'typed', nudges:0};
+function sendText(t, how){
+  t = t.trim();
+  if(!t || busy) return;
+  lastMeta = {how: how === 'voice' ? 'voice' : 'typed', nudges};
+  endWaiting();
+  stopSpeaking();
+  input.value = ''; grow(); prevLen = 0; dictating = false;
+  addKid(t);
+  if(isWholeSentence(t)) giveStar();
+  pipTurn(t);
+}
+document.getElementById('composer').addEventListener('submit', e => {
+  e.preventDefault();
+  sendText(input.value);
+});
+
+document.getElementById('ages').addEventListener('click', e => {
+  const b = e.target.closest('.age'); if(!b) return;
+  age = Number(b.dataset.age);
+  // unlock speech on this tap
+  if(synth){ const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); }
+  primeMic();
+  document.getElementById('welcome').hidden = true;
+  const cv = document.getElementById('chatView'); cv.hidden = false;
+  pipTurn(null);
+});
+
+/* ---------- Microphone: turns on when it's the child's turn, off when they're done ----------
+   How Pip decides the child is finished:
+   1. Pause timing: a quiet gap, longer for younger kids and for answers that sound unfinished
+      ("I like dogs because…"). Grown-ups can pick Short / Medium / Long pauses.
+   2. Sound: on computers a voice meter hears "ummm" and quiet talking, so Pip keeps waiting.
+   3. AI check: after a short pause, a quick AI call reads the question and the answer so far
+      and says whether the child sounds done. Done → Pip answers right away. Not done → Pip waits longer.
+   4. The child can say "I'm done" or tap the mic. */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const micBtn = document.getElementById('micBtn');
+const pauseSel = document.getElementById('pauseSel');
+const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const IN_FRAME = (() => { try { return window.self !== window.top } catch(e) { return true } })();
+const TOUCH = 'ontouchstart' in window;
+
+// Inside the Claude app (or any embedded frame) the browser blocks the microphone, so don't pretend.
+let micOK = !!SR && !IN_FRAME && (window.isSecureContext !== false);
+let rec = null, heard = '', prefix = '', lastSpeechAt = 0, tickTimer = null, hearWatch = null;
+let everWorked = false, micPrimed = false, needsTap = false, kbMode = false, failCount = 0, restartTries = 0;
+let doneCheck = {text:'', state:'idle'};   // AI check for the current words: idle | asking | done | notdone
+
+const PAUSE_MULT = {short:0.75, medium:1, long:1.4};
+let pauseKey = store.get('pip-pause') || 'medium'; if(!PAUSE_MULT[pauseKey]) pauseKey = 'medium';
+pauseSel.value = pauseKey;
+pauseSel.onchange = () => { pauseKey = pauseSel.value; store.set('pip-pause', pauseKey); };
+
+const UNFINISHED = /\b(and|and then|but|because|cause|cuz|so|then|um+|uh+|er+|erm|hmm+|like|the|a|an|my|your|his|her|our|their|to|with|of|is|was|are|were|am|i|it's|its|it|when|if|or|that|this|for|in|on|at|from|about|very|really|also|some|going|gonna|want|wanna|have|has|can|will|would|could|we|they|he|she|you|me|there|what|which|who)[\s.,]*$/i;
+const DONE_PHRASE = /[\s,]*\b(i'?m done|i am done|that'?s it|that is it|the end|i'?m finished|i am finished)[\s.!]*$/i;
+const wordsOf = t => t.trim().split(/\s+/).filter(Boolean);
+
+function endGap(text){
+  const base = ({5:2300, 6:2100, 7:1900, 8:1700}[age] || 2000) * PAUSE_MULT[pauseKey];
+  const w = wordsOf(text).length;
+  if(UNFINISHED.test(text)) return base * 1.9;
+  if(w < 3) return base * 1.5;
+  if(w < 6) return base * 1.15;
+  return base;
+}
+
+/* Merge recognition results. iPhone Safari often repeats the whole sentence in each new
+   result ("I like", "I like dogs", "I like dogs because…"), which used to garble the answer. */
+const norm = t => t.toLowerCase().replace(/[^a-z0-9' ]/g,'').replace(/\s+/g,' ').trim();
+function mergeResults(list){
+  let out = '';
+  for(const raw of list){
+    const t = raw.trim(); if(!t) continue;
+    const a = norm(out), b = norm(t);
+    if(!a) out = t;
+    else if(b.startsWith(a)) out = t;            // grows the same sentence
+    else if(a.endsWith(b) || a.includes(b)) {}    // repeat of something we have
+    else out += ' ' + t;
+  }
+  return out.trim();
+}
+
+/* Voice meter (computers only: on iPhone a second mic stream stops speech recognition hearing) */
+let audioCtx = null, analyser = null, levelBuf = null, noiseFloor = 0.008, vadTried = false;
+const ear = document.querySelector('#listen .ear');
+async function startVAD(){
+  if(IS_IOS) return;
+  if(analyser || vadTried){ if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{}); return; }
+  vadTried = true;
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true, autoGainControl:true}});
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser(); analyser.fftSize = 1024;
+    audioCtx.createMediaStreamSource(stream).connect(analyser);
+    levelBuf = new Float32Array(analyser.fftSize);
+  }catch(e){ analyser = null; }
+}
+function voiceLevel(){
+  if(!analyser) return 0;
+  analyser.getFloatTimeDomainData(levelBuf);
+  let sum = 0; for(let i=0;i<levelBuf.length;i++) sum += levelBuf[i]*levelBuf[i];
+  return Math.sqrt(sum / levelBuf.length);
+}
+
+/* Ask for microphone permission during a tap (the age button), so later turns can switch the
+   mic on by themselves without a tap. */
+async function primeMic(){
+  if(!micOK || micPrimed) return;
+  micPrimed = true;
+  try{
+    const s = await navigator.mediaDevices.getUserMedia({audio:true});
+    s.getTracks().forEach(t => t.stop());       // release it straight away; recognition opens its own
+  }catch(e){
+    if(e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')) micBlocked('Microphone permission was turned off.');
+  }
+}
+
+/* The listening loop */
+function tick(){
+  if(!rec) return;
+  const now = Date.now();
+  if(analyser){
+    const lvl = voiceLevel();
+    if(lvl > Math.max(noiseFloor * 3, 0.012)) lastSpeechAt = now;
+    else noiseFloor = noiseFloor * 0.97 + Math.min(lvl, 0.05) * 0.03;
+    ear.style.transform = `scale(${1 + Math.min(lvl * 18, 1.4)})`;
+  }
+  const text = heard.trim();
+  if(!text) return;
+  if(DONE_PHRASE.test(text)){
+    const rest = text.replace(DONE_PHRASE, '').trim();
+    if(rest) return finishTurn(rest);
+  }
+  const quiet = now - lastSpeechAt, gap = endGap(text);
+  // After a short pause, ask the AI whether the answer sounds complete.
+  if(quiet > Math.min(900, gap * 0.45) && doneCheck.text !== text){
+    doneCheck = {text, state:'asking'};
+    aiThinksDone(text).then(done => {
+      if(doneCheck.text !== text) return;          // the child kept talking
+      doneCheck.state = done === true ? 'done' : done === false ? 'notdone' : 'idle';
+    });
+  }
+  if(doneCheck.text === text && doneCheck.state === 'done' && quiet > 700) return finishTurn(text);
+  const limit = doneCheck.text === text && doneCheck.state === 'notdone' ? gap * 1.8 : gap;
+  if(quiet > limit || quiet > 9000) return finishTurn(text);
+  listenText.textContent = quiet > 800 ? 'Take your time… say more, or wait and Pip will answer.' : 'I hear you!';
+}
+function finishTurn(text){
+  stopListening();                 // mic off as soon as the child is done
+  heard = ''; prefix = '';
+  sendText(text, 'voice');
+}
+
+/* When the mic can't be used, switch to the keyboard microphone (iPhone) or typing */
+function micBlocked(reason){
+  micOK = false;
+  stopListening();
+  micBtn.hidden = true;
+  document.getElementById('autoMicWrap').hidden = true;
+  document.getElementById('pauseWrap').hidden = true;
+  useKeyboard();
+  paintListen();
+  if(reason) toast(reason + (TOUCH ? ' Tap the box, then the mic key on the keyboard to talk.' : ' Type to Pip instead.'));
+}
+function useKeyboard(){
+  kbMode = true;
+  const h = document.getElementById('kbHint');
+  h.hidden = false;
+  h.querySelector('span').innerHTML = TOUCH
+    ? 'To talk: tap the box below, then the <b>microphone key</b> on the keyboard. Pip sends it when you stop.'
+    : 'Type your answer and press Enter.';
+  input.placeholder = TOUCH ? 'Tap here, then the mic key on the keyboard…' : 'Tell Pip in a whole sentence…';
+}
+
+function startListening(keepText, fromTap){
+  if(!micOK || rec || busy || kbMode) return;
+  if(synth && synth.speaking) return;                 // never listen while Pip is talking
+  if(needsTap && !fromTap){ paintListen(); return; }  // the phone wants a tap this time
+  if(!keepText){ heard = ''; prefix = ''; restartTries = 0; }
+  else prefix = heard;
+  let r;
+  try{
+    r = new SR(); r.lang = 'en-US'; r.interimResults = true; r.continuous = true; r.maxAlternatives = 1;
+  }catch(err){ return micBlocked("This browser can't listen."); }
+  rec = r;
+  lastSpeechAt = Date.now();
+  let gotAudio = false;
+  const alive = () => { if(!gotAudio){ gotAudio = true; clearTimeout(hearWatch); failCount = 0; } };
+  r.onaudiostart = alive;
+  r.onsoundstart = () => { alive(); lastSpeechAt = Date.now(); };
+  r.onspeechstart = () => { alive(); lastSpeechAt = Date.now(); };
+  r.onresult = ev => {
+    alive(); everWorked = true; needsTap = false;
+    const parts = [];
+    for(let i=0; i<ev.results.length; i++) parts.push(ev.results[i][0].transcript);
+    const now = mergeResults(parts);
+    heard = mergeResults([prefix, now].filter(Boolean));
+    input.value = heard; grow();
+    lastSpeechAt = Date.now();
+    onKidActivity();
+  };
+  r.onerror = ev => {
+    const e = ev.error;
+    if(e === 'not-allowed' || e === 'service-not-allowed'){
+      if(everWorked || !fromTap){ needsTap = true; r._needsTap = true; }   // just needs a tap to start again
+      else r._blocked = true;
+    } else if(e === 'audio-capture'){ r._blocked = true; }
+  };
+  r.onend = () => {
+    clearTimeout(hearWatch);
+    if(rec === r) rec = null;
+    micBtn.classList.remove('on');
+    if(r._aborted){ paintListen(); return; }
+    if(r._blocked) return micBlocked(IS_IOS
+      ? 'Pip needs the microphone. On the iPhone: Settings → Safari → Microphone → Allow, and turn on Dictation.'
+      : 'Pip needs the microphone. Allow it in the browser settings.');
+    if(r._needsTap){
+      if(heard.trim() && !busy) return finishTurn(heard.trim());
+      paintListen(); return;
+    }
+    // The browser stopped by itself. Keep listening if it's still the child's turn.
+    if(listenEl.hidden || busy){ paintListen(); return; }
+    if(heard.trim() && Date.now() - lastSpeechAt >= endGap(heard)) return finishTurn(heard.trim());
+    if(restartTries++ < 30) setTimeout(() => { if(!listenEl.hidden && !busy) startListening(true, true); }, 120);
+    else paintListen();
+  };
+  try{ r.start(); }
+  catch(err){ rec = null; needsTap = true; paintListen(); return; }
+  micBtn.classList.add('on'); paintListen();
+  startVAD();
+  // If the mic never really opens, say so instead of looking like it's listening.
+  clearTimeout(hearWatch);
+  hearWatch = setTimeout(() => {
+    if(rec !== r || gotAudio || heard.trim()) return;
+    stopListening();
+    if(++failCount >= 2) micBlocked("Pip can't hear the microphone here.");
+    else { needsTap = true; paintListen(); toast("Pip couldn't hear the mic. Tap the green mic to try again."); }
+  }, 4500);
+  clearInterval(tickTimer); tickTimer = setInterval(tick, 120);
+}
+function stopListening(){
+  clearInterval(tickTimer); tickTimer = null;
+  clearTimeout(hearWatch);
+  if(ear) ear.style.transform = '';
+  if(!rec) return;
+  const r = rec; rec = null; r._aborted = true;
+  try{ r.abort(); }catch(e){}
+  micBtn.classList.remove('on');
+  paintListen();
+}
+
+micBtn.onclick = () => {
+  if(rec){
+    const t = heard.trim();
+    if(t) return finishTurn(t);        // tapping while talking means "I'm finished"
+    stopListening(); return;
+  }
+  stopSpeaking();
+  needsTap = false;
+  if(listenEl.hidden && !busy){ listenEl.hidden = false; armTimer(); }
+  startListening(false, true);
+};
+input.addEventListener('keydown', () => { if(rec) stopListening(); });   // typing takes over from the mic
+
+// Set up what the page can do
+if(!SR || !micOK){
+  micBtn.hidden = true;
+  document.getElementById('autoMicWrap').hidden = true;
+  document.getElementById('pauseWrap').hidden = true;
+  useKeyboard();
+  if(IN_FRAME){
+    const n = document.getElementById('frameNote');
+    if(n) n.hidden = false;
+  }
+} else micBtn.hidden = false;
+
+/* Keyboard microphone (iPhone dictation): send when the child stops talking. */
+let dictating = false, lastDictAt = 0, prevLen = 0;
+input.addEventListener('input', ev => {
+  const grewBy = input.value.length - prevLen;
+  prevLen = input.value.length;
+  const t = ev.inputType || '';
+  if(t === 'insertReplacementText' || t === 'insertFromDictation' || (ev.data && ev.data.length > 2) || grewBy > 2){
+    dictating = true; lastDictAt = Date.now();
+  } else if(dictating && t.startsWith('insert')) lastDictAt = Date.now();
+});
+setInterval(() => {
+  if(!dictating || busy) return;
+  const text = input.value.trim();
+  if(!text){ dictating = false; return; }
+  if(Date.now() - lastDictAt > endGap(text) * 1.2){
+    dictating = false; prevLen = 0;
+    input.blur();
+    sendText(text, 'voice');
+  }
+}, 200);
+</script>
+
+</body></html>

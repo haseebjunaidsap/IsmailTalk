@@ -1,4 +1,8 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Talk with Pip</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Andika:wght@400;700&display=swap">
@@ -119,7 +123,13 @@
   .age:hover{transform:translateY(-4px) rotate(-2deg)}
   .age:nth-child(1){background:var(--coral)}.age:nth-child(2){background:var(--leaf)}
   .age:nth-child(3){background:#5B8DEF}.age:nth-child(4){background:#B56BD8}
-  .grownup{font-size:14px;color:var(--ink-soft);max-width:44ch}
+  .grownup{font-size:14px;color:var(--ink-soft);max-width:46ch;text-align:left;background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:8px 14px}
+  .grownup summary{cursor:pointer;font-family:var(--display);font-weight:700;font-size:15px;color:var(--ink)}
+  .grownup p{font-size:14px;margin:8px 0;max-width:none}
+  .grownup code{background:#EEF6FD;padding:1px 5px;border-radius:5px}
+  .keyrow{display:flex;gap:6px;flex-wrap:wrap}
+  .keyrow input{flex:1;min-width:0;border:2px solid var(--line);border-radius:10px;padding:6px 8px;font-size:14px}
+  .keyrow button{border:2px solid var(--line);background:var(--sky);border-radius:10px;padding:6px 10px;font-size:14px}
 
   .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:14px;font-size:15px;max-width:calc(100% - 48px);text-align:center;z-index:5}
 
@@ -135,7 +145,8 @@
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
-
+</head>
+<body>
 <div class="app">
   <header class="top">
     <div class="brand">Talk with <span>Pip</span></div>
@@ -178,7 +189,16 @@
         <button class="age" data-age="7">7<small>years</small></button>
         <button class="age" data-age="8">8<small>years</small></button>
       </div>
-      <p class="grownup">For grown-ups: Pip asks Claude for each reply, so the first message asks you to allow that. Turn the sound up and pick a talking speed above.</p>
+      <details class="grownup" id="grownup">
+        <summary>Grown-up settings</summary>
+        <p id="aiStatus">Checking for AI…</p>
+        <p>If you started Pip with <code>server.js</code> and an API key, you don't need to do anything here. Otherwise you can paste an Anthropic API key below. It is saved only in this browser.</p>
+        <div class="keyrow">
+          <input type="password" id="keyInput" placeholder="sk-ant-…" autocomplete="off" aria-label="Anthropic API key">
+          <button type="button" id="keySave">Save key</button>
+          <button type="button" id="keyClear">Remove</button>
+        </div>
+      </details>
     </section>
 
     <section id="chatView" hidden style="display:flex;flex-direction:column;flex:1;min-height:0">
@@ -450,11 +470,76 @@ function isWholeSentence(t){
   return w.length >= 4 && !isShort(t);
 }
 
-/* ---------- AI ---------- */
-(async () => {
-  try{ sample = window.claude ? await window.claude.use('sample') : null }catch(e){ sample = null }
+/* ---------- AI (standalone) ----------
+   Mode 1 "server": server.js holds the API key and forwards requests (recommended).
+   Mode 2 "direct": a grown-up pastes an API key into Grown-up settings; it stays in this browser.
+   Otherwise Pip uses the scripted simple mode. */
+const MODEL = 'claude-haiku-4-5-20251001';
+let aiMode = null;
+async function detectAI(){
+  aiMode = null;
+  if(location.protocol.startsWith('http')){
+    try{
+      const r = await fetch('api/health', {cache:'no-store'});
+      if(r.ok && (await r.json()).hasKey) aiMode = 'server';
+    }catch(e){}
+  }
+  if(!aiMode && store.get('pip-key')) aiMode = 'direct';
+  sample = aiMode;                 // truthy when AI is available
+  aiFailed = !aiMode;
+  paintAIStatus();
   aiReady = true;
-})();
+}
+function paintAIStatus(){
+  const s = document.getElementById('aiStatus');
+  if(!s) return;
+  s.textContent = aiMode === 'server' ? 'AI is on (using the server key).'
+    : aiMode === 'direct' ? 'AI is on (using the key saved in this browser).'
+    : 'AI is off. Pip will use simple scripted questions until you add a key.';
+  document.getElementById('modeLine').textContent = aiMode ? '' : 'Simple mode';
+}
+detectAI();
+document.getElementById('keySave').onclick = () => {
+  const k = document.getElementById('keyInput').value.trim();
+  if(!k){ toast('Paste a key first.'); return; }
+  store.set('pip-key', k); document.getElementById('keyInput').value = '';
+  detectAI().then(()=>toast(aiMode ? 'Key saved. Pip is ready!' : 'Could not save the key in this browser.'));
+};
+document.getElementById('keyClear').onclick = () => {
+  try{ localStorage.removeItem('pip-key') }catch(e){}
+  detectAI().then(()=>toast('Key removed.'));
+};
+
+function parseJSON(text){
+  try{ return JSON.parse(text) }catch(e){}
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/); if(fence){ try{ return JSON.parse(fence[1]) }catch(e){} }
+  const a = text.indexOf('{'), b = text.lastIndexOf('}');
+  if(a >= 0 && b > a){ try{ return JSON.parse(text.slice(a, b+1)) }catch(e){} }
+  throw {code:'invalid_json'};
+}
+async function callClaude(system, messages){
+  let r;
+  if(aiMode === 'server'){
+    r = await fetch('api/chat', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({system, messages})});
+  } else {
+    r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'content-type':'application/json',
+        'x-api-key': store.get('pip-key') || '',
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body: JSON.stringify({model: MODEL, max_tokens: 500, system, messages})
+    });
+  }
+  if(r.status === 401 || r.status === 403) throw {code:'not_granted'};
+  if(r.status === 429 || r.status === 529) throw {code:'rate_limited'};
+  if(!r.ok) throw {code:'upstream_error'};
+  const data = await r.json();
+  const text = (data.content || []).filter(c=>c.type==='text').map(c=>c.text).join('');
+  return parseJSON(text);
+}
 
 async function askAI(kidText, note){
   const content = kidText == null
@@ -463,7 +548,7 @@ async function askAI(kidText, note){
   turns.push({role:'user', content});
   if(turns.length > 24) turns = turns.slice(-24);
   while(turns[0] && turns[0].role !== 'user') turns.shift();
-  const res = await sample.json([{role:'user', content: rules()}, ...turns], {modelTier:'quick', cache:false});
+  const res = await callClaude(rules(), turns);
   const say = String(res && res.say || '').trim();
   if(!say) throw {code:'empty_completion'};
   turns.push({role:'assistant', content: say});
@@ -471,7 +556,7 @@ async function askAI(kidText, note){
 }
 
 
-async function quickJSON(prompt){ return sample.json(prompt, {modelTier:'quick', cache:false}); }
+async function quickJSON(prompt){ return callClaude('You help a talking app for children decide when a child has finished speaking. Reply with only JSON.', [{role:'user', content: prompt}]); }
 
 /* Smart turn-taking: does the child sound finished? (true / false / null = not sure) */
 async function aiThinksDone(text){
@@ -546,7 +631,7 @@ async function pipTurn(kidText){
         if(['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(code)){
           aiFailed = true;
           document.getElementById('modeLine').textContent = 'Simple mode';
-          toast("Pip is using simple mode because Claude isn't allowed here.");
+          toast("Pip's AI key isn't working, so Pip is using simple mode. A grown-up can fix it in Grown-up settings.");
         } else if(code === 'rate_limited'){
           toast('Pip needs a little rest. Try again in a minute.');
         } else {
@@ -954,5 +1039,5 @@ setInterval(() => {
   }
 }, 200);
 </script>
-
-</body></html>
+</body>
+</html>

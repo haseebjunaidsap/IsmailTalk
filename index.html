@@ -72,6 +72,20 @@
   .pip .lids{transform-origin:60px 52px;animation:blink 4.5s infinite}
   @keyframes blink{0%,94%,100%{transform:scaleY(0)}96%{transform:scaleY(1)}}
   .pip.bounce{animation:bob 1.6s ease-in-out infinite}
+  .pip.mood-excited{animation:hop .5s ease-in-out 3}
+  @keyframes hop{50%{transform:translateY(-10px) scale(1.06)}}
+  .pip.mood-curious{animation:tilt 1.4s ease-in-out infinite}
+  @keyframes tilt{50%{transform:rotate(-8deg)}}
+  .pip.mood-silly{animation:wiggle .6s ease-in-out 4}
+  @keyframes wiggle{25%{transform:rotate(10deg)}75%{transform:rotate(-10deg)}}
+  .pip.listening{animation:lean 2.2s ease-in-out infinite}
+  @keyframes lean{50%{transform:rotate(6deg) translateY(2px)}}
+  .pip.listening .mouth{transform:scaleY(.55)}
+  .acts{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 8px}
+  .acts button{border:2px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 12px;font-family:var(--display);font-weight:700;font-size:15px;color:var(--ink-soft)}
+  .acts button:active{background:var(--sun)}
+  .msg.kid.draft{opacity:.7;border-style:dashed}
+  .pip-msg{cursor:pointer}
   @keyframes bob{50%{transform:translateY(-5px)}}
   .buddymeta{display:flex;flex-direction:column;gap:2px;min-width:0}
   .buddymeta b{font-family:var(--display);font-size:22px;line-height:1}
@@ -198,6 +212,7 @@
           <button type="button" id="keySave">Save key</button>
           <button type="button" id="keyClear">Remove</button>
         </div>
+        <p><label for="brainSel">Pip's brain: <select id="brainSel"><option value="quick">Quick (Haiku, fastest)</option><option value="smart">Smart (Sonnet, best judgement)</option></select></label></p>
       </details>
     </section>
 
@@ -212,6 +227,13 @@
       </div>
       <div class="chat" id="chat" aria-live="polite"></div>
       <div class="starters" id="starters"></div>
+      <div class="acts" id="acts" hidden>
+        <button type="button" data-act="story">Story time</button>
+        <button type="button" data-act="rather">Would you rather?</button>
+        <button type="button" data-act="teach">Teach Pip</button>
+        <button type="button" data-act="joke">Something silly</button>
+        <button type="button" data-act="topic">New topic</button>
+      </div>
       <div class="listen" id="listen" hidden>
         <span class="ear"></span><span id="listenText">Your turn!</span>
         <span class="bar" id="waitBar"><b id="waitFill"></b></span>
@@ -250,6 +272,9 @@ document.getElementById('pipBig').innerHTML = PIP_SVG;
 document.getElementById('pipSmall').innerHTML = PIP_SVG;
 const pips = [document.getElementById('pipBig'), document.getElementById('pipSmall')];
 const setTalking = on => pips.forEach(p => p.classList.toggle('talking', on));
+const MOODS = ['mood-happy','mood-excited','mood-curious','mood-silly','mood-calm'];
+function setMood(m){ pips.forEach(p => { MOODS.forEach(c => p.classList.remove(c)); if(m) p.classList.add('mood-' + m); }); }
+function setListeningFace(on){ pips.forEach(p => p.classList.toggle('listening', on)); }
 
 /* ---------- Settings ---------- */
 const SPEEDS = [
@@ -303,65 +328,54 @@ if(synth){ loadVoices(); synth.onvoiceschanged = loadVoices; }
 voiceSel.onchange = () => { store.set('pip-voice', voiceSel.value); if(lastPipText && !busy) sayAndWait(lastPipText, lastPipEl); };
 if(!synth) voiceSel.parentElement.hidden = true;
 
-// Split text into phrases, each with its own pitch and a pause after it.
-function phrases(text){
-  const clean = text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'').replace(/\s+/g,' ').trim();
-  const sentences = clean.match(/[^.!?]+[.!?]*\s*/g) || [clean];
-  const out = [];
-  sentences.forEach(s => {
-    const end = (s.trim().slice(-1));
-    const parts = s.split(/(?<=,|;|—|:)\s+/);
-    parts.forEach((p,j) => {
-      const last = j === parts.length-1;
-      out.push({
-        text:p.trim(),
-        pitch: last && end==='?' ? 1.28 : last && end==='!' ? 1.22 : 1.12,
-        pause: last ? (end==='?' ? 650 : end==='!' ? 520 : 480) : 240
-      });
-    });
-  });
-  return out.filter(p=>p.text);
+// Pip speaks one whole sentence at a time. The pitch lifts for questions and excitement,
+// with short, natural pauses between sentences (no stopping at every comma).
+function sentencesOf(text){
+  const clean = String(text).replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'').replace(/\s+/g,' ').trim();
+  return (clean.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) || [clean]).map(s => s.trim()).filter(Boolean);
 }
 let speakToken = 0;
 function stopSpeaking(){ speakToken++; if(synth) synth.cancel(); setTalking(false); document.querySelectorAll('.seg.now').forEach(s=>s.classList.remove('now')); }
-function speak(text, bubble){
+// Speak one sentence. Resolves true when it finished, false if Pip was interrupted.
+function speakOne(sentence, seg, token){
+  if(token !== speakToken) return Promise.resolve(false);
+  if(muted || !synth) return Promise.resolve(true);
+  const rate = SPEEDS[speedIdx].rate;
+  const voice = voices.find(v => v.name === voiceSel.value) || voices[0];
+  const end = sentence.replace(/["')\]]+$/,'').slice(-1);
+  return new Promise(resolve => {
+    const u = new SpeechSynthesisUtterance(sentence);
+    if(voice) u.voice = voice;
+    u.lang = voice ? voice.lang : 'en-US';
+    u.rate = rate; u.pitch = end === '?' ? 1.25 : end === '!' ? 1.2 : 1.1; u.volume = 1;
+    if(seg) seg.classList.add('now');
+    u.onstart = () => setTalking(true);
+    let done = false;
+    const finish = () => {
+      if(done) return; done = true;
+      clearTimeout(guard);
+      setTalking(false);
+      if(seg) seg.classList.remove('now');
+      if(token !== speakToken) return resolve(false);
+      const pause = (end === '?' ? 260 : end === '!' ? 200 : 180) / Math.sqrt(rate);
+      setTimeout(() => resolve(token === speakToken), pause);
+    };
+    u.onend = u.onerror = finish;
+    // Safety net: some phones never report that speech ended.
+    const guard = setTimeout(() => { if(!done){ synth.cancel(); finish(); } }, (sentence.length * 110) / rate + 2500);
+    synth.speak(u);
+  });
+}
+async function speak(text, bubble){
   stopSpeaking();
   stopListening();
-  if(muted || !synth) return Promise.resolve(true);
   const token = speakToken;
-  const list = phrases(text);
-  const segs = bubble ? bubble.querySelectorAll('.seg') : [];
-  const rate = SPEEDS[speedIdx].rate;
-  const voice = voices.find(v=>v.name===voiceSel.value) || voices[0];
-  return new Promise(resolve => {
-    let i = 0;
-    const next = () => {
-      if(token !== speakToken) return resolve(false);
-      segs.forEach(s=>s.classList.remove('now'));
-      if(i >= list.length){ setTalking(false); return resolve(true); }
-      const ph = list[i];
-      const u = new SpeechSynthesisUtterance(ph.text);
-      if(voice) u.voice = voice;
-      u.lang = voice ? voice.lang : 'en-US';
-      u.rate = rate; u.pitch = ph.pitch; u.volume = 1;
-      // find the sentence span that contains this phrase
-      segs.forEach(s => { if(s.textContent.includes(ph.text)) s.classList.add('now') });
-      u.onstart = () => setTalking(true);
-      let done = false;
-      const finish = () => {
-        if(done) return; done = true;
-        clearTimeout(guard);
-        setTalking(false);
-        i++;
-        setTimeout(next, ph.pause / rate);   // slower speed = longer thinking pauses
-      };
-      u.onend = u.onerror = finish;
-      // Safety net: some phones never report that speech ended, which would leave Pip stuck.
-      const guard = setTimeout(() => { if(!done){ synth.cancel(); finish(); } }, (ph.text.length * 110) / rate + 2500);
-      synth.speak(u);
-    };
-    next();
-  });
+  const segs = bubble ? [...bubble.querySelectorAll('.seg')] : [];
+  const list = sentencesOf(text);
+  for(let i = 0; i < list.length; i++){
+    if(!(await speakOne(list[i], segs[i] || null, token))) return false;
+  }
+  return true;
 }
 
 /* ---------- Chat UI ---------- */
@@ -375,15 +389,29 @@ let lastPipText = '', lastPipEl = null;
 function esc(s){ return s.replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) }
 function scrollDown(){ chat.scrollTop = chat.scrollHeight }
 
-function addPip(text, isNudge){
+function newPipBubble(){
   const el = document.createElement('div');
   el.className = 'msg pip-msg';
-  const sentences = text.match(/[^.!?]+[.!?]*\s*/g) || [text];
-  el.innerHTML = sentences.map(s=>`<span class="seg">${esc(s)}</span>`).join('') +
-    `<br><button class="again" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg>Say it again</button>`;
-  el.querySelector('.again').onclick = () => { if(!busy) sayAndWait(text, el); };
+  el.innerHTML = '<span class="body"></span>';
   chat.appendChild(el); scrollDown();
+  return el;
+}
+function addSeg(el, s){
+  const seg = document.createElement('span');
+  seg.className = 'seg'; seg.textContent = s + ' ';
+  el.querySelector('.body').appendChild(seg); scrollDown();
+  return seg;
+}
+function finishBubble(el, text, isNudge){
+  el.insertAdjacentHTML('beforeend', '<br><button class="again" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg>Say it again</button>');
+  el.querySelector('.again').onclick = () => { if(!busy) sayAndWait(text, el); };
   if(!isNudge){ lastPipText = text; lastPipEl = el; }
+  scrollDown();
+}
+function addPip(text, isNudge){
+  const el = newPipBubble();
+  sentencesOf(text).forEach(s => addSeg(el, s));
+  finishBubble(el, text, isNudge);
   return el;
 }
 function addKid(text){
@@ -439,26 +467,55 @@ const AGE_STYLE = {
   7:{words:10, note:'simple words with a few fun new ones, like talking to a second grader'},
   8:{words:12, note:'clear, lively words, like talking to a third grader; you may add one fun fact'},
 };
+// What Pip remembers about the child, filled in from Pip's own replies.
+let profile = {name:'', likes:[], topic:'', facts:[]};
+let recentOpeners = [];   // first words of Pip's last replies, so Pip doesn't start every turn the same way
+const ACTIVITIES = {
+  story: "Let's tell a silly story together! You say one line, then I say one line.",
+  rather: "Ask me a would-you-rather question!",
+  teach: "Can you teach me how to do it? I want to learn!",
+  joke: "Tell me something silly or funny!",
+  topic: "Let's talk about something else!",
+};
 function rules(){
   const a = AGE_STYLE[age];
-  return `You are Pip, a friendly, bouncy little talking buddy in a speaking-practice app for a ${age}-year-old child. Your replies are read aloud by a text-to-speech voice.
+  const known = [
+    profile.name && `name: ${profile.name}`,
+    profile.likes.length && `likes: ${profile.likes.join(', ')}`,
+    profile.topic && `current topic: ${profile.topic}`,
+    profile.facts.length && `things the child told you: ${profile.facts.join('; ')}`
+  ].filter(Boolean).join('\n');
+  return `You are Pip, a friendly, bouncy little talking buddy in a speaking-practice app for a ${age}-year-old child. Your words are read aloud by a text-to-speech voice, and the child answers by talking.
 
-Your job: get the child talking in whole sentences, especially a shy child who doesn't like to talk. Be warm, excited, silly and kind. Never scold, never test, never say "wrong".
+Your job: have a real, flowing conversation that gets the child talking in whole sentences, especially a shy child. Be warm, playful, curious and kind. Never scold, never test, never say "wrong".
+
+What you know about the child (the ONLY facts you may use about them):
+${known || 'nothing yet'}
+
+Stay grounded:
+- Talk only about what the child actually said. Never invent things about the child (pets, family, school, what they did). If you are not sure what they said, ask kindly: "Did you say ...?"
+- Follow the child's lead. If they mention or ask for a new thing (for example painting), switch to it right away. Never bring up a topic the child did not mention, except when asking "What else do you love?" after a topic is used up.
+- Every question must connect to what the child just said or to the current topic.
+- If the child asks YOU a question, answer it in one short, fun sentence (you can have pretend favorites), then ask them back.
 
 How to talk:
 - Use ${a.note}. Keep every sentence ${a.words} words or fewer.
-- Reply with 2 or 3 short sentences. First react to what the child said with real excitement. Then end with exactly ONE easy, open question (what / which / why / how / tell me), never a yes-or-no question.
-- Use punctuation for natural speaking: commas for little pauses, "!" for excitement, "?" for questions. Words like "Wow," "Ooh," "Hmm," are welcome. No emoji, no lists, no asterisks.
-- Topics: in the first turns ask the child's name, then what they love. Then pick a fun topic from their answers (animals, dinosaurs, space, food, games, superheroes of their own invention, family pets, their favorite toy, weather, bugs, the ocean, drawing, sports, silly "what if" ideas). Stay on a topic for 3 to 5 questions, then gently move to a new one linked to something they said. Give options inside the question when it helps a shy child, e.g. "Would you rather have a dragon or a unicorn, and why?"
-- If the child answers with only yes, no, ok, maybe, idk, or one or two words: cheer warmly, then ask them to say it as a whole sentence and give one example sentence they could copy, e.g. "Can you say it in a whole sentence? Like, I like red because it is bright!"
-- If the child answered in a whole sentence, praise it specifically ("What a great sentence!") now and then, not every time.
+- Usually 2 sentences, sometimes 1 or 3. First react to exactly what the child said, using one of their own words, so they can tell you listened. Then end with exactly ONE easy, open question. Never a yes-or-no question.
+- Vary how you start. Don't begin with these words again: ${recentOpeners.length ? recentOpeners.join(', ') : 'none yet'}.
+- Be interactive: every few turns do a mini-activity about the current topic: a would-you-rather, a one-line-each silly story, asking the child to teach you something, a pretend game, or a "what if". Keep it tied to the topic. If the child taps an activity button, do that activity about the current topic.
+- Give two fun choices inside the question when the child is quiet or unsure.
+- Stay on a topic for 3 to 5 questions, then ask what else they love, or link to something they said they like.
+- Punctuation for natural speaking: "!" for excitement, "?" for questions. No emoji, no lists, no asterisks.
+- If the child answers with only yes, no, ok, maybe, idk, or one or two words: cheer warmly, then ask them to say it as a whole sentence and give one example sentence they could copy.
+- If the child answered in a whole sentence, praise it specifically now and then, not every time.
 - If the child seems sad, scared, hurt, or says something worrying, be gentle and kind, and suggest they tell a grown-up they trust. Never ask for last names, addresses, school names, phone numbers or passwords. Keep everything child-safe.
-- The child's words often come from speech-to-text, so they may contain misheard words. Work out what they most likely meant and never mention spelling or mistakes.
-- If a note says the child was quiet for a while, be extra warm and make the next question very easy, with two fun choices.
+- The child's words come from speech-to-text and may contain misheard words. Work out what they most likely meant; never mention spelling or mistakes.
 
-Reply with ONLY a JSON object, no other text:
-{"say": "what Pip says out loud", "topic": "2 to 3 word topic name", "starters": ["sentence starter 1...", "sentence starter 2...", "sentence starter 3..."]}
-"starters" are 3 short sentence beginnings the child could tap and finish to answer your question, written in the child's voice, each ending with "..." (for example "My favorite animal is...", "I like it because...").`;
+Answer in exactly this format and nothing else:
+Line 1: what Pip says out loud, as one paragraph.
+Line 2: ###
+Line 3: {"topic": "2 to 3 word topic", "mood": "happy|excited|curious|silly|calm", "starters": ["...", "...", "..."], "name": "the child's first name if known, else empty", "likes": ["things the child said they like"], "facts": ["short facts the child told you this turn, in their words"]}
+"starters" are 3 short sentence beginnings the child could tap and finish to answer your question, in the child's voice, each ending with "..." (for example "I like to paint...").`;
 }
 
 function isShort(t){
@@ -474,7 +531,9 @@ function isWholeSentence(t){
    Mode 1 "server": server.js holds the API key and forwards requests (recommended).
    Mode 2 "direct": a grown-up pastes an API key into Grown-up settings; it stays in this browser.
    Otherwise Pip uses the scripted simple mode. */
-const MODEL = 'claude-haiku-4-5-20251001';
+const MODELS = {quick:'claude-haiku-4-5-20251001', smart:'claude-sonnet-5'};
+let brain = store.get('pip-brain') === 'smart' ? 'smart' : 'quick';
+const MODEL = () => MODELS[brain];
 let aiMode = null;
 async function detectAI(){
   aiMode = null;
@@ -499,6 +558,8 @@ function paintAIStatus(){
   document.getElementById('modeLine').textContent = aiMode ? '' : 'Simple mode';
 }
 detectAI();
+document.getElementById('brainSel').value = brain;
+document.getElementById('brainSel').onchange = e => { brain = e.target.value; store.set('pip-brain', brain); };
 document.getElementById('keySave').onclick = () => {
   const k = document.getElementById('keyInput').value.trim();
   if(!k){ toast('Paste a key first.'); return; }
@@ -510,144 +571,256 @@ document.getElementById('keyClear').onclick = () => {
   detectAI().then(()=>toast('Key removed.'));
 };
 
+// Ask Claude and receive the answer as it is written (streaming), so Pip can start talking early.
+async function streamClaude(system, messages, {signal, onDelta}){
+  let r;
+  try{
+    if(aiMode === 'server'){
+      r = await fetch('api/chat', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({system, messages, stream:true, model: MODEL()}), signal});
+    } else {
+      r = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{
+          'content-type':'application/json',
+          'x-api-key': store.get('pip-key') || '',
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true'
+        },
+        body: JSON.stringify({model: MODEL(), max_tokens: 400, temperature: 0.7, system, messages, stream: true}),
+        signal
+      });
+    }
+  }catch(e){ throw {code: e && e.name === 'AbortError' ? 'cancelled' : 'upstream_error'}; }
+  if(r.status === 401 || r.status === 403) throw {code:'not_granted'};
+  if(r.status === 429 || r.status === 529) throw {code:'rate_limited'};
+  if(!r.ok) throw {code:'upstream_error'};
+  let full = '';
+  const ct = r.headers.get('content-type') || '';
+  if(!r.body || !ct.includes('event-stream')){          // no streaming: read the whole answer
+    const data = await r.json();
+    full = (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
+    onDelta(full);
+    return full;
+  }
+  const reader = r.body.getReader(), dec = new TextDecoder();
+  let buf = '';
+  try{
+    while(true){
+      const {value, done} = await reader.read();
+      if(done) break;
+      buf += dec.decode(value, {stream:true});
+      let i;
+      while((i = buf.indexOf('\n')) >= 0){
+        const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+        if(!line.startsWith('data:')) continue;
+        let ev; try{ ev = JSON.parse(line.slice(5)); }catch(e){ continue; }
+        if(ev.type === 'content_block_delta' && ev.delta && ev.delta.type === 'text_delta'){ full += ev.delta.text; onDelta(full); }
+        else if(ev.type === 'error') throw {code: ev.error && ev.error.type === 'overloaded_error' ? 'rate_limited' : 'upstream_error'};
+      }
+    }
+  }catch(e){
+    if(e && e.code) throw e;
+    throw {code: e && e.name === 'AbortError' ? 'cancelled' : 'upstream_error'};
+  }
+  return full;
+}
+const FATAL_MSG = "Pip's AI key isn't working, so Pip is using simple mode. A grown-up can fix it in Grown-up settings.";
+
 function parseJSON(text){
   try{ return JSON.parse(text) }catch(e){}
   const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/); if(fence){ try{ return JSON.parse(fence[1]) }catch(e){} }
   const a = text.indexOf('{'), b = text.lastIndexOf('}');
   if(a >= 0 && b > a){ try{ return JSON.parse(text.slice(a, b+1)) }catch(e){} }
-  throw {code:'invalid_json'};
-}
-async function callClaude(system, messages){
-  let r;
-  if(aiMode === 'server'){
-    r = await fetch('api/chat', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({system, messages})});
-  } else {
-    r = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{
-        'content-type':'application/json',
-        'x-api-key': store.get('pip-key') || '',
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body: JSON.stringify({model: MODEL, max_tokens: 500, system, messages})
-    });
-  }
-  if(r.status === 401 || r.status === 403) throw {code:'not_granted'};
-  if(r.status === 429 || r.status === 529) throw {code:'rate_limited'};
-  if(!r.ok) throw {code:'upstream_error'};
-  const data = await r.json();
-  const text = (data.content || []).filter(c=>c.type==='text').map(c=>c.text).join('');
-  return parseJSON(text);
-}
-
-async function askAI(kidText, note){
-  const content = kidText == null
-    ? `(The child just chose age ${age} and tapped start. Say a happy hello, say your name is Pip, and ask the child's first name.)`
-    : `The child said: "${kidText}"` + (note ? `\n(${note})` : '');
-  turns.push({role:'user', content});
-  if(turns.length > 24) turns = turns.slice(-24);
-  while(turns[0] && turns[0].role !== 'user') turns.shift();
-  const res = await callClaude(rules(), turns);
-  const say = String(res && res.say || '').trim();
-  if(!say) throw {code:'empty_completion'};
-  turns.push({role:'assistant', content: say});
-  return {say, topic: res.topic ? String(res.topic) : '', starters: Array.isArray(res.starters) ? res.starters.map(String) : []};
-}
-
-
-async function quickJSON(prompt){ return callClaude('You help a talking app for children decide when a child has finished speaking. Reply with only JSON.', [{role:'user', content: prompt}]); }
-
-/* Smart turn-taking: does the child sound finished? (true / false / null = not sure) */
-async function aiThinksDone(text){
-  if(aiFailed || !sample) return null;
-  const q = lastQuestion() || lastPipText;
-  const prompt = `A ${age}-year-old child is answering a question out loud in a talking app. Their words come from speech-to-text and may be cut off or slightly misheard.
-Question: "${q}"
-What the child has said so far: "${text}"
-They have just paused. Have they finished their answer, or are they probably still in the middle of a thought (an unfinished sentence, a list that is still going, "because" with no reason yet)? A short but complete answer counts as finished.
-Reply with only JSON: {"done": true} or {"done": false}`;
-  try{
-    const res = await Promise.race([quickJSON(prompt), new Promise(r => setTimeout(() => r(null), 3000))]);
-    if(res && typeof res.done === 'boolean') return res.done;
-  }catch(e){}
   return null;
 }
 
-/* ---------- Simple mode (used when Claude can't be reached) ---------- */
-const OFF = {
-  stage:0, topicIdx:0, q:0, name:'',
-  topics:[
-    {name:'Animals', qs:['What animal do you like the most, and why?','What sound does that animal make? Can you tell me in a sentence?','If you had a pet, what would you name it?'], st:['My favorite animal is...','I like it because...','I would name my pet...']},
-    {name:'Food', qs:['What is the yummiest food in the whole world?','What food do you not like at all, and why?','If you made a silly sandwich, what would go in it?'], st:['The yummiest food is...','I do not like...','My silly sandwich has...']},
-    {name:'Space', qs:['If you flew a rocket, where would you go?','Who would you take with you on your rocket?','What would you pack for space?'], st:['I would fly to...','I would take...','I would pack...']},
-    {name:'Playtime', qs:['What is your favorite game to play?','Who do you like to play with?','What is the best toy you have?'], st:['My favorite game is...','I like to play with...','My best toy is...']},
-  ]
-};
-function offlineReply(kidText){
-  const short = kidText != null && isShort(kidText);
-  if(kidText == null) return {say:"Hi there! I'm Pip. I love to chat! What is your name?", topic:'Getting to know you', starters:['My name is...']};
-  if(short) return {say:`Ooh, thank you! Can you tell me in a whole sentence? Like this: ${currentStarter()}`, topic:'', starters:[currentStarter()]};
-  if(OFF.stage === 0){
-    const m = kidText.match(/(?:name is|i am|i'm|call me)\s+([A-Za-z]+)/i);
-    OFF.name = m ? m[1] : '';
-    OFF.stage = 1;
-    return {say:`${OFF.name ? 'Hi, '+OFF.name+'!' : 'Hooray!'} What a lovely name! What do you like best: animals, food, space, or playing games?`, topic:'Getting to know you', starters:['I like animals because...','I like space because...','I like games because...']};
-  }
-  if(OFF.stage === 1){
-    const t = kidText.toLowerCase();
-    OFF.topicIdx = /food|eat|pizza|cake/.test(t)?1 : /space|rocket|star|moon|planet/.test(t)?2 : /game|play|toy/.test(t)?3 : 0;
-    OFF.stage = 2; OFF.q = 0;
-  } else { OFF.q++; if(OFF.q >= 3){ OFF.topicIdx = (OFF.topicIdx+1)%OFF.topics.length; OFF.q = 0; } }
-  const T = OFF.topics[OFF.topicIdx];
-  const cheers = ['Wow, great sentence!','Ooh, I love that!','Yay, tell me more!','That is so cool!'];
-  return {say:`${cheers[Math.floor(Math.random()*cheers.length)]} ${T.qs[OFF.q]}`, topic:T.name, starters:[T.st[OFF.q]]};
+/* ---------- Pip's reply engine ----------
+   - The reply streams in and Pip speaks each sentence as soon as it is complete.
+   - While the child pauses, Pip starts preparing a reply (a "speculative" reply). The AI answers
+     WAIT if the child sounds cut off mid-sentence; otherwise the reply is ready the moment the
+     child is done, so there is no long silence.
+   - If a reply fails, Pip tries again, then kindly asks the child to repeat. It never swaps in
+     a scripted question that ignores what the child said. */
+const FATAL = ['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'];
+const WAIT_HINT = '\n(The child may still be talking. If their words are clearly cut off in the middle of a sentence, reply with only the word WAIT. Otherwise reply normally.)';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function aiOn(){ return !aiFailed && !!sample; }
+
+function userContent(kidText, note){
+  return kidText == null
+    ? `(The child just chose age ${age} and tapped start. Say a happy hello, say your name is Pip, and ask the child's first name.)`
+    : `The child said: "${kidText}"` + (note ? `\n(${note})` : '');
 }
-function currentStarter(){
-  if(OFF.stage === 0) return 'My name is...';
-  if(OFF.stage === 1) return 'I like animals because...';
-  return OFF.topics[OFF.topicIdx].st[OFF.q];
+function noteFor(kidText, how, nudgeCount){
+  let note = kidText != null && isShort(kidText) && how !== 'tap'
+    ? 'This was a very short answer. Cheer, then kindly ask for a whole sentence and give one example sentence to copy.' : '';
+  if(how === 'tap') note += ' The child tapped an activity button; do this activity about the current topic.';
+  if(how === 'voice' && lowConfidence) note += ' Speech-to-text was unsure about some of these words; if the meaning is unclear, kindly check what they said.';
+  if(stars > 0 && stars % 5 === 0 && lastMeta.star) note += ` The child just earned star number ${stars}. Celebrate that in a few words.`;
+  if(how === 'voice') note += ' The child said this out loud (speech-to-text).';
+  if(nudgeCount >= 2) note += ' The child was quiet for a while before answering.';
+  return note.trim();
 }
 
-/* ---------- Turn handling ---------- */
-async function pipTurn(kidText){
-  busy = true; sendBtn.disabled = true; showStarters([]);
-  const thinking = addThinking();
-  let reply;
-  let note = kidText != null && isShort(kidText)
-    ? 'This was a very short answer. Cheer, then kindly ask for a whole sentence and give one example sentence to copy.'
-    : '';
-  const meta = (lastMeta.how === 'voice' ? ' The child said this out loud (speech-to-text).' : '')
-    + (lastMeta.nudges >= 2 ? ' The child was quiet for a while before answering.' : '');
-  if(meta) note = (note ? note + ' ' : '') + meta.trim();
-  if(!aiFailed){
-    // wait briefly for the runtime to answer
-    for(let i=0; i<40 && !aiReady; i++) await new Promise(r=>setTimeout(r,100));
-    if(sample){
-      try{ reply = await askAI(kidText, note) }
-      catch(e){
-        turns.pop();
-        const code = e && e.code;
-        if(['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(code)){
-          aiFailed = true;
-          document.getElementById('modeLine').textContent = 'Simple mode';
-          toast("Pip's AI key isn't working, so Pip is using simple mode. A grown-up can fix it in Grown-up settings.");
-        } else if(code === 'rate_limited'){
-          toast('Pip needs a little rest. Try again in a minute.');
-        } else {
-          toast('Pip lost the words for a second. Using simple mode for this answer.');
-        }
-      }
-    } else {
-      aiFailed = true;
-      document.getElementById('modeLine').textContent = 'Simple mode';
+function startReply(kidText, note, allowWait){
+  const userMsg = userContent(kidText, note);
+  let history = turns.slice(-20);
+  while(history[0] && history[0].role !== 'user') history.shift();
+  const job = {kidText, userMsg, allowWait, ctl: new AbortController(), full:'', say:'', sentences:[], meta:{}, wait:false, done:false, error:null};
+  job.promise = streamClaude(rules(), [...history, {role:'user', content: userMsg + (allowWait ? WAIT_HINT : '')}],
+      {signal: job.ctl.signal, onDelta: full => { job.full = full; readJob(job, false); }})
+    .then(full => { job.full = full || job.full; readJob(job, true); job.done = true; })
+    .catch(e => { job.error = (e && e.code) ? e : {code:'upstream_error'}; job.done = true; });
+  return job;
+}
+function readJob(job, final){
+  const letters = job.full.replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 4);
+  if(job.allowWait){
+    if(letters === 'WAIT' && job.full.trim().length <= 8){ job.wait = true; return; }
+    if('WAIT'.startsWith(letters) && !final) return;        // not sure yet
+  }
+  const cut = job.full.indexOf('###');
+  const sayPart = cut >= 0 ? job.full.slice(0, cut) : job.full;
+  const closed = final || cut >= 0;
+  job.say = sayPart.replace(/\s+/g, ' ').trim();
+  job.sentences = closed ? sentencesOf(job.say)
+    : (sayPart.match(/[^.!?]*[.!?]+["')\]]*\s/g) || []).map(s => s.replace(/\s+/g,' ').trim()).filter(Boolean);
+  if(final){
+    job.meta = (cut >= 0 && parseJSON(job.full.slice(cut + 3))) || {};
+    // If the model answered with JSON only, read it.
+    if(cut < 0 && /^\s*\{/.test(job.full)){
+      const m = parseJSON(job.full);
+      if(m && m.say){ job.say = String(m.say); job.sentences = sentencesOf(job.say); job.meta = m; }
     }
   }
-  if(!reply) reply = offlineReply(kidText);
-  thinking.remove();
+}
+
+// Speak a reply while it streams in. Resolves {el, interrupted}; throws the AI error if nothing came.
+async function playJob(job, thinking){
+  stopSpeaking(); stopListening();
+  const token = speakToken;
+  let i = 0, el = null;
+  while(true){
+    if(job.wait) throw {code:'wait'};
+    if(i < job.sentences.length){
+      if(!el){ if(thinking) thinking.remove(); el = newPipBubble(); }
+      const s = job.sentences[i++];
+      const ok = await speakOne(s, addSeg(el, s), token);
+      if(!ok) return {el, interrupted: true};
+      continue;
+    }
+    if(job.done){
+      if(job.error && !el) throw job.error;
+      break;
+    }
+    await sleep(40);
+  }
+  if(!el) throw {code:'empty_completion'};
+  return {el, interrupted: false};
+}
+
+function applyMeta(m){
+  if(!m || typeof m !== 'object') return;
+  if(m.topic){ profile.topic = String(m.topic).slice(0, 40); document.getElementById('topicLine').innerHTML = 'Talking about <em>' + esc(profile.topic) + '</em>'; }
+  if(typeof m.name === 'string' && m.name.trim()) profile.name = m.name.trim().slice(0, 30);
+  if(Array.isArray(m.facts)){
+    for(const f of m.facts){ const t = String(f).trim().slice(0, 80); if(t && !profile.facts.includes(t)) profile.facts.push(t); }
+    profile.facts = profile.facts.slice(-12);
+  }
+  if(m.mood && MOODS.includes('mood-' + m.mood)) setMood(String(m.mood));
+  if(Array.isArray(m.likes)){
+    for(const l of m.likes){ const s = String(l).toLowerCase().trim().slice(0, 40); if(s && !profile.likes.includes(s)) profile.likes.push(s); }
+    profile.likes = profile.likes.slice(-8);
+  }
+}
+
+/* ---------- Simple mode (only when there is no AI at all) ----------
+   Follows the child's own topic ("I love painting" → questions about painting). */
+const OFF = {stage:0, topic:'', q:0, name:''};
+const OFF_STOP = /^(the|a|an|my|to|it|that|this|with|and|so|very|really|lots|of|too|go|do|play|playing|doing|make|making|eat|eating|watch|watching)$/i;
+function findTopic(t){
+  const m = t.toLowerCase().match(/(?:talk about|about|love|loves|like|likes|enjoy|favorite (?:thing )?is|want to)\s+(?:to\s+)?([a-z]+(?:\s+[a-z]+)?)/);
+  if(!m) return '';
+  return m[1].split(/\s+/).filter(x => !OFF_STOP.test(x)).slice(0, 2).join(' ');
+}
+const OFF_QS = [
+  x => [`Ooh, ${x}! What do you like most about ${x}?`, `I like ${x} because...`],
+  x => [`Who do you like to share ${x} with?`, `I like to share it with...`],
+  x => [`If you could make the best ${x} ever, what would it be like?`, `It would be...`],
+  x => [`What is the funniest thing about ${x}?`, `The funniest thing is...`],
+];
+function offlineReply(kidText){
+  if(kidText == null) return {say:"Hi there! I'm Pip. I love to chat! What is your name?", topic:'Getting to know you', starters:['My name is...']};
+  if(isShort(kidText) && !(OFF.stage === 0 && /^[A-Za-z]+[.!]?$/.test(kidText.trim())))
+    return {say:`Ooh, thank you! Can you tell me in a whole sentence? Like this: ${currentStarter()}`, topic:'', starters:[currentStarter()]};
+  const cheers = ['Wow, great sentence!','Ooh, I love that!','Yay, tell me more!','That is so cool!'];
+  if(OFF.stage === 0){
+    const m = kidText.match(/(?:name is|i am|i'm|call me)\s+([A-Za-z]+)/i) || kidText.trim().match(/^([A-Za-z]+)[.!]?$/);
+    OFF.name = m ? m[1] : '';
+    OFF.stage = 1;
+    return {say:`${OFF.name ? 'Hi, ' + OFF.name + '!' : 'Hooray!'} What a lovely name! What do you love doing most?`, topic:'Getting to know you', starters:['I love...','My favorite thing is...']};
+  }
+  const found = findTopic(kidText);
+  if(found && found !== OFF.topic){ OFF.topic = found; OFF.q = 0; }
+  else if(OFF.topic) OFF.q++;
+  if(!OFF.topic || OFF.q >= OFF_QS.length){
+    OFF.topic = ''; OFF.q = 0;
+    return {say:`${pick(cheers)} What else do you love to do?`, topic:'Your favorite things', starters:['I love to...','I really like...']};
+  }
+  const [q, st] = OFF_QS[OFF.q](OFF.topic);
+  return {say: OFF.q === 0 ? q : `${pick(cheers)} ${q}`, topic: OFF.topic, starters:[st]};
+}
+function currentStarter(){ return lastStarters[0] || (OFF.stage === 0 ? 'My name is...' : 'I love...'); }
+
+/* ---------- Turn handling ---------- */
+async function pipTurn(kidText, job){
+  busy = true; sendBtn.disabled = true; showStarters([]);
+  const how = lastMeta.how, quietNudges = lastMeta.nudges;
+  nudges = 0;
+  const thinking = (job && job.sentences.length) ? null : addThinking();
+  for(let i = 0; i < 40 && !aiReady; i++) await sleep(100);
+
+  if(aiOn()){
+    const note = noteFor(kidText, how, quietNudges);
+    let result = null, used = null;
+    for(let attempt = 0; attempt < 2 && !result; attempt++){
+      const j = (attempt === 0 && job && !job.wait && !job.error) ? job : startReply(kidText, note, false);
+      try{ result = await playJob(j, thinking); used = j; }
+      catch(e){
+        if(FATAL.includes(e.code)){ aiFailed = true; document.getElementById('modeLine').textContent = 'Simple mode'; toast(FATAL_MSG); break; }
+        if(e.code === 'rate_limited') await sleep(900);
+      }
+    }
+    if(result){
+      while(!used.done) await sleep(40);
+      const say = used.sentences.join(' ') || used.say;
+      turns.push({role:'user', content: used.userMsg}, {role:'assistant', content: say});
+      if(turns.length > 30) turns = turns.slice(-30);
+      applyMeta(used.meta);
+      recentOpeners = [...recentOpeners, say.split(/[\s,!.?]+/).slice(0, 1).join(' ')].filter(Boolean).slice(-4);
+      finishBubble(result.el, say);
+      lastStarters = Array.isArray(used.meta.starters) ? used.meta.starters.map(String) : [];
+      showStarters(lastStarters);
+      busy = false; sendBtn.disabled = false;
+      if(!result.interrupted) startWaiting();
+      return;
+    }
+    if(!aiFailed){
+      // No answer this time: ask the child to say it again, without changing the conversation.
+      if(thinking) thinking.remove();
+      const say = pick(["Oops, my ears got mixed up! Can you say that again?", "Hmm, I missed that one. Can you tell me again?"]);
+      const el = addPip(say, true);
+      busy = false; sendBtn.disabled = false;
+      sayAndWait(say, el);
+      return;
+    }
+  }
+
+  // Simple mode
+  const reply = offlineReply(kidText);
+  if(thinking) thinking.remove();
   if(reply.topic) document.getElementById('topicLine').innerHTML = 'Talking about <em>' + esc(reply.topic) + '</em>';
   lastStarters = reply.starters || [];
-  nudges = 0;
   const el = addPip(reply.say);
   showStarters(reply.starters);
   busy = false; sendBtn.disabled = false;
@@ -680,6 +853,8 @@ async function sayAndWait(text, el){
 }
 function startWaiting(){
   listenEl.hidden = false;
+  document.getElementById('acts').hidden = !aiOn();
+  setListeningFace(true);
   paintListen();
   if(autoMic) startListening();
   armTimer();
@@ -687,6 +862,8 @@ function startWaiting(){
 function endWaiting(){
   clearTimeout(silenceTimer); silenceTimer = null;
   listenEl.hidden = true;
+  document.getElementById('acts').hidden = true;
+  setListeningFace(false);
   stopListening();
 }
 function armTimer(){
@@ -742,17 +919,26 @@ function nudge(){
 }
 
 let lastMeta = {how:'typed', nudges:0};
-function sendText(t, how){
+function sendText(t, how, job){
   t = t.trim();
   if(!t || busy) return;
-  lastMeta = {how: how === 'voice' ? 'voice' : 'typed', nudges};
+  lastMeta = {how: how === 'voice' ? 'voice' : how === 'tap' ? 'tap' : 'typed', nudges, star: isWholeSentence(t)};
   endWaiting();
   stopSpeaking();
   input.value = ''; grow(); prevLen = 0; dictating = false;
   addKid(t);
   if(isWholeSentence(t)) giveStar();
-  pipTurn(t);
+  pipTurn(t, job);
 }
+document.getElementById('acts').addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]'); if(!b || busy) return;
+  stopSpeaking();
+  sendText(ACTIVITIES[b.dataset.act], 'tap');
+});
+// Tapping Pip (or its bubble) while it talks means "my turn": Pip stops and listens.
+function interruptPip(){ if(synth && synth.speaking && !busy){ stopSpeaking(); startWaiting(); } }
+document.getElementById('pipSmall').addEventListener('click', interruptPip);
+chat.addEventListener('click', e => { if(e.target.closest('.pip-msg') && !e.target.closest('.again')) interruptPip(); });
 document.getElementById('composer').addEventListener('submit', e => {
   e.preventDefault();
   sendText(input.value);
@@ -774,8 +960,8 @@ document.getElementById('ages').addEventListener('click', e => {
    1. Pause timing: a quiet gap, longer for younger kids and for answers that sound unfinished
       ("I like dogs because…"). Grown-ups can pick Short / Medium / Long pauses.
    2. Sound: on computers a voice meter hears "ummm" and quiet talking, so Pip keeps waiting.
-   3. AI check: after a short pause, a quick AI call reads the question and the answer so far
-      and says whether the child sounds done. Done → Pip answers right away. Not done → Pip waits longer.
+   3. AI: after a short pause Pip starts preparing its reply. If the child sounds cut off, the AI
+      answers WAIT and Pip keeps listening; otherwise the reply is ready the moment the child is done.
    4. The child can say "I'm done" or tap the mic. */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const micBtn = document.getElementById('micBtn');
@@ -787,8 +973,16 @@ const TOUCH = 'ontouchstart' in window;
 // Inside the Claude app (or any embedded frame) the browser blocks the microphone, so don't pretend.
 let micOK = !!SR && !IN_FRAME && (window.isSecureContext !== false);
 let rec = null, heard = '', prefix = '', lastSpeechAt = 0, tickTimer = null, hearWatch = null;
+let lastHeard = '', lowConfidence = false, draftEl = null;
+// Pip learns how long this child's thinking pauses are, so it doesn't cut in too early.
+let pauseLearned = 0;
+function notePause(ms){ if(ms < 4000) pauseLearned = Math.max(pauseLearned * 0.9, Math.min(ms * 1.15, 2600)); }
+function showDraft(text){
+  if(!text){ if(draftEl){ draftEl.remove(); draftEl = null; } return; }
+  if(!draftEl){ draftEl = document.createElement('div'); draftEl.className = 'msg kid draft'; chat.appendChild(draftEl); }
+  draftEl.textContent = text; scrollDown();
+}
 let everWorked = false, micPrimed = false, needsTap = false, kbMode = false, failCount = 0, restartTries = 0;
-let doneCheck = {text:'', state:'idle'};   // AI check for the current words: idle | asking | done | notdone
 
 const PAUSE_MULT = {short:0.75, medium:1, long:1.4};
 let pauseKey = store.get('pip-pause') || 'medium'; if(!PAUSE_MULT[pauseKey]) pauseKey = 'medium';
@@ -799,12 +993,15 @@ const UNFINISHED = /\b(and|and then|but|because|cause|cuz|so|then|um+|uh+|er+|er
 const DONE_PHRASE = /[\s,]*\b(i'?m done|i am done|that'?s it|that is it|the end|i'?m finished|i am finished)[\s.!]*$/i;
 const wordsOf = t => t.trim().split(/\s+/).filter(Boolean);
 
+const ASKS_PIP = /^(what|why|how|who|where|when|which|do you|can you|are you|is it|did you|have you|would you)\b/i;
 function endGap(text){
-  const base = ({5:2300, 6:2100, 7:1900, 8:1700}[age] || 2000) * PAUSE_MULT[pauseKey];
+  let base = ({5:1500, 6:1350, 7:1200, 8:1100}[age] || 1300) * PAUSE_MULT[pauseKey];
+  base = Math.max(base, pauseLearned);                 // this child's own thinking pauses
   const w = wordsOf(text).length;
-  if(UNFINISHED.test(text)) return base * 1.9;
-  if(w < 3) return base * 1.5;
-  if(w < 6) return base * 1.15;
+  if(UNFINISHED.test(text)) return base * 1.8;
+  if(ASKS_PIP.test(text.trim()) && w >= 3) return base * 0.8;   // the child asked Pip something: answer quickly
+  if(w < 3) return base * 1.4;
+  if(w < 6) return base * 1.1;
   return base;
 }
 
@@ -860,6 +1057,8 @@ async function primeMic(){
 }
 
 /* The listening loop */
+let spec = null;   // a reply Pip starts preparing while the child pauses: {text, job}
+function dropSpec(){ if(spec){ spec.job.ctl.abort(); spec = null; } }
 function tick(){
   if(!rec) return;
   const now = Date.now();
@@ -876,23 +1075,27 @@ function tick(){
     if(rest) return finishTurn(rest);
   }
   const quiet = now - lastSpeechAt, gap = endGap(text);
-  // After a short pause, ask the AI whether the answer sounds complete.
-  if(quiet > Math.min(900, gap * 0.45) && doneCheck.text !== text){
-    doneCheck = {text, state:'asking'};
-    aiThinksDone(text).then(done => {
-      if(doneCheck.text !== text) return;          // the child kept talking
-      doneCheck.state = done === true ? 'done' : done === false ? 'notdone' : 'idle';
-    });
+  if(spec && (spec.text !== text || quiet < 300)) dropSpec();     // the child kept talking
+  // A short pause: start preparing Pip's reply now, so it's ready the moment the child is done.
+  if(!spec && aiOn() && quiet > Math.max(600, gap * 0.3)){
+    spec = {text, job: startReply(text, noteFor(text, 'voice', nudges), true)};
   }
-  if(doneCheck.text === text && doneCheck.state === 'done' && quiet > 700) return finishTurn(text);
-  const limit = doneCheck.text === text && doneCheck.state === 'notdone' ? gap * 1.8 : gap;
-  if(quiet > limit || quiet > 9000) return finishTurn(text);
-  listenText.textContent = quiet > 800 ? 'Take your time… say more, or wait and Pip will answer.' : 'I hear you!';
+  let limit = gap;
+  if(spec){
+    const j = spec.job;
+    if(j.wait){ limit = gap * 1.8; listenText.textContent = 'Mm-hm… go on, I\'m listening!'; }   // the AI thinks they aren't finished
+    else if(!j.error && (j.sentences.length || (j.done && j.say)) && quiet > 500) return finishTurn(text, j);
+  }
+  if(quiet > limit || quiet > 9000) return finishTurn(text, spec && !spec.job.wait && !spec.job.error ? spec.job : null);
+  if(!(spec && spec.job.wait)) listenText.textContent = quiet > 800 ? 'Take your time… say more, or wait and Pip will answer.' : 'I hear you!';
 }
-function finishTurn(text){
+function finishTurn(text, job){
+  if(spec && spec.job !== job) spec.job.ctl.abort();
+  spec = null;
+  showDraft(''); lastHeard = '';
   stopListening();                 // mic off as soon as the child is done
   heard = ''; prefix = '';
-  sendText(text, 'voice');
+  sendText(text, 'voice', job);
 }
 
 /* When the mic can't be used, switch to the keyboard microphone (iPhone) or typing */
@@ -920,7 +1123,7 @@ function startListening(keepText, fromTap){
   if(!micOK || rec || busy || kbMode) return;
   if(synth && synth.speaking) return;                 // never listen while Pip is talking
   if(needsTap && !fromTap){ paintListen(); return; }  // the phone wants a tap this time
-  if(!keepText){ heard = ''; prefix = ''; restartTries = 0; }
+  if(!keepText){ heard = ''; prefix = ''; restartTries = 0; lastHeard = ''; lowConfidence = false; showDraft(''); }
   else prefix = heard;
   let r;
   try{
@@ -939,8 +1142,12 @@ function startListening(keepText, fromTap){
     for(let i=0; i<ev.results.length; i++) parts.push(ev.results[i][0].transcript);
     const now = mergeResults(parts);
     heard = mergeResults([prefix, now].filter(Boolean));
-    input.value = heard; grow();
-    lastSpeechAt = Date.now();
+    const lastR = ev.results[ev.results.length - 1];
+    if(lastR && lastR[0] && typeof lastR[0].confidence === 'number' && lastR[0].confidence > 0) lowConfidence = lastR[0].confidence < 0.55;
+    const t = Date.now();
+    if(heard !== lastHeard){ if(lastHeard && t - lastSpeechAt > 350) notePause(t - lastSpeechAt); lastHeard = heard; }
+    showDraft(heard);
+    lastSpeechAt = t;
     onKidActivity();
   };
   r.onerror = ev => {
@@ -984,6 +1191,7 @@ function startListening(keepText, fromTap){
 }
 function stopListening(){
   clearInterval(tickTimer); tickTimer = null;
+  if(typeof spec !== 'undefined' && spec) dropSpec();
   clearTimeout(hearWatch);
   if(ear) ear.style.transform = '';
   if(!rec) return;

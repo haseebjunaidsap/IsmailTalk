@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#DDF1FF">
 <title>Talk with Pip</title>
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAEyElEQVR42u2dy40UQRBEa1PrB9JeEZbgwQg/OOx5DusHWg+wBHEECROwAA5cEJ+d7pnqrIjMFzdg1GRnvYqsT1f33ZfvPwZC/1KQAgQcCDgQcCDgQMCBgAMBBwIOBBwIOBACDgQc6Hbdk4IxxsPT6e+//Pr+uXla7jpv2f+TCSihrGwlY9cvgaMXGZ35aFdWbmzmViWG2QoCjknVoVV9CciAD+BAwJHS3ZuYB86BgAMBR1oV6FBZcA4EHAg4EHAg4ECDXVmTGcpotltbDY7lM8xKlBSBQ3DVoQAl9nCIL0ZZI+IKh90CpSMlfnBYr1t7IRKQQfz2zlFso8vCQgzgKLz/KY5IQAZ35+ccrZ7z1rSQgAzu1wmOnmcPBe9aq6y0PbKsWWICMrAQdTggQzAbQS7gQxcOyJDNTEAGfCjCARniWQrIgA8tOCDDImMBGfChAgdkGGWPQ01IAw5swyuHARnwsRgOyHDMJ2MOtBQObMM0qwEZ8EFZQWJwYBvW5oFzoBVwYBvu5hGQAR+UFaQBB7ZRwzw8vyt7/v+xn8cTsXWF4/y86QdLmkE5tqFxHPKomnLef0gwrRlkYpt7lPK+glss7KnKsakNSOfbxvl5/RV8Ypub/6jpGQl8KMdWH465WetzNU04Znpat74+75oTW4EVUuQFR6chpHJxubdeMn/1+u3vf/z2+aNOZhfG9vB0mrLgMW0RbBoc2zrQH6nf1wxXry4oxzbmr4ZZjjleyP7Ff+0cmzkcG7rmlvxe+M111V05NmU40gYc23tefh+Vim1KizCVRSXg2NvhMs1DOTacAwEHAg5UBA4eJx5FHzl2co69K9CZK9bKsVWBI+exuev+F+XYGHPs6nD5XVM5tipwXOo6WzL70m9u6ZrKseEcW9pgbb9Ujm3kb9kfMlu5anM8aUNcObYxc+Pe8zikQ0f0MgmrsnJE9Z11TeXYuow55uarz9W6DEg79HXhE5Hys5Xbc3dc9pVjG00OUv/KoOYpe+XYGr2fY1czJKdeObZGU9mLzbAw9cqxNVrnUM7y44nnOdDgYZ+R/KohNGReAYVzIOBAwIGAAwEHKgAHE5Z6UxWcAwEHAg4kCgfDjmIDDpwDAQcaAt9bWXXi/vHDJ7XMnt+9sa4pOAcCDqQAB3OWGvMUnAOlw7HEPFaN/qTimZ55nAM1gEPHPNRsTAsOhqUFakq1sqLQZcvYxoFwYB7utnGsczScttSYpFSerazio1JByYBjVXHJb6cC22yN1jkyW6ueZyTBsXBkmtNmC8k4OrdR4B4WtlxhMob7e0i3t9/0p4GqlpJx3JNgQ/uzLFMQUcAix4zz4ND5bM/ViIi4RVqZToVD8LNOF0FRKx+ZA7j6Yw6GDjbrHOy5GGUvyt8hZJitkMKHRcai1d1Chs3eCnyIZyna3jlkGOzKwodsZoIsQIb68xzwIZiNICOQMUT2Vobh/kvb7hHkiLs2e4a0Gx+a96tYVlqVGOVuEOSOu3N1jqoWYgG9DRxlEDHywiCzxF/EOXwtxBFrVzhcKLG2Ons4ZBEpMM8qAocOJZXm3tXgWEVJyfWYsnAkgFJ+jb8FHFNwabgd2BQONHiDMQIOBBwIOBBwIOBAwIGAAwEHQsCBgAMBB5qqn3bbLLbwBgQ0AAAAAElFTkSuQmCC">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Andika:wght@400;700&display=swap">
 <style>
@@ -11,60 +13,69 @@
     --sky:#DDF1FF; --sky2:#C4E6FF; --ink:#1E2A4A; --ink-soft:#4A5878;
     --sun:#FFC93C; --sun-deep:#E8A800; --coral:#FF7A59; --coral-deep:#E4573A;
     --leaf:#2FB67C; --leaf-deep:#1E9463; --paper:#FFFFFF; --kid:#FFEFB8; --line:#B9D8F2;
+    --berry:#B56BD8; --blue:#5B8DEF;
     --display:"Baloo 2","Trebuchet MS","Comic Sans MS",system-ui,sans-serif;
     --body:"Andika","Verdana","Segoe UI",system-ui,sans-serif;
     color-scheme:light;
   }
-  html,body{height:100%}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;overscroll-behavior:none}
   body{
-    margin:0;background:var(--sky);color:var(--ink);font-family:var(--body);font-size:18px;
+    background:var(--sky);color:var(--ink);font-family:var(--body);font-size:18px;
     background-image:
       radial-gradient(ellipse 180px 60px at 12% 14%, #fff9 60%, transparent 62%),
       radial-gradient(ellipse 240px 70px at 88% 30%, #fff8 60%, transparent 62%),
       radial-gradient(ellipse 160px 50px at 30% 88%, #fff7 60%, transparent 62%);
     background-attachment:fixed;
+    /* no accidental zooming, text selection or long-press menus for little fingers */
+    touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+    padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
   }
-  button,select,textarea{font:inherit;color:inherit}
-  button{cursor:pointer}
+  textarea,input{-webkit-user-select:text;user-select:text}
+  button,select,textarea,input{font:inherit;color:inherit}
+  button{cursor:pointer;-webkit-tap-highlight-color:transparent}
   :focus-visible{outline:3px solid var(--coral-deep);outline-offset:3px}
+  [hidden]{display:none!important}
 
-  .app{height:100%;display:flex;flex-direction:column;max-width:760px;margin:0 auto;padding-inline:16px;box-sizing:border-box}
+  .app{height:100%;display:flex;flex-direction:column;max-width:780px;margin:0 auto;padding-inline:16px}
 
-  /* Top bar */
-  .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-block:12px 8px}
-  .brand{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:.2px;margin-right:auto;line-height:1}
+  /* Top bar: name, stars, surprises, grown-up lock */
+  .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-block:12px 10px}
+  .brand{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:.2px;line-height:1}
   .brand span{color:var(--coral-deep)}
-  .pill{display:inline-flex;align-items:center;gap:6px;background:var(--paper);border:2px solid var(--line);border-radius:999px;padding:4px 12px;font-family:var(--display);font-weight:700;font-size:17px}
-  .pill svg{width:22px;height:22px}
+  .loot{display:flex;align-items:center;gap:10px;margin-left:auto}
+  .pill{display:inline-flex;align-items:center;gap:6px;background:var(--paper);border:2px solid var(--line);border-radius:999px;padding:4px 12px;font-family:var(--display);font-weight:800;font-size:20px;font-variant-numeric:tabular-nums}
+  .pill svg{width:24px;height:24px}
   .stars.pop{animation:pop .5s ease}
-  @keyframes pop{40%{transform:scale(1.25)}}
-  .iconbtn{background:var(--paper);border:2px solid var(--line);border-radius:999px;width:42px;height:42px;display:grid;place-items:center}
-  .iconbtn svg{width:22px;height:22px}
-
-  /* Speed */
-  .speed{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding-bottom:8px}
-  .speed .lbl{font-family:var(--display);font-weight:700;font-size:15px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.8px;margin-right:2px}
-  .speed button{border:2px solid var(--line);background:var(--paper);border-radius:14px;padding:5px 10px;font-family:var(--display);font-weight:700;font-size:15px;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.1}
-  .speed button .dots{display:flex;gap:2px}
-  .speed button .dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
-  .speed button .dots i.on{background:var(--ink)}
-  .speed button[aria-pressed="true"]{background:var(--sun);border-color:var(--sun-deep)}
-  .settings{margin-left:auto;display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;font-size:14px;color:var(--ink-soft)}
-  .settings label{display:flex;align-items:center;gap:6px}
-  .settings select{max-width:170px;border:2px solid var(--line);border-radius:10px;background:var(--paper);padding:4px 6px;font-size:14px}
-  .settings input[type=checkbox]{width:18px;height:18px;accent-color:var(--leaf)}
+  @keyframes pop{40%{transform:scale(1.3) rotate(-6deg)}}
+  .gift{display:flex;flex-direction:column;gap:3px;min-width:120px}
+  .giftbar{display:block;height:10px;border-radius:99px;background:var(--paper);border:2px solid var(--line);overflow:hidden}
+  .giftbar b{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--sun),var(--coral));border-radius:99px;transition:width .6s cubic-bezier(.3,1.4,.5,1)}
+  #giftText{font-family:var(--display);font-weight:700;font-size:13px;color:var(--ink-soft);line-height:1}
+  .stickers{display:flex;gap:4px}
+  .stickers span{width:32px;height:32px;border-radius:50%;background:var(--paper);border:2px solid var(--line);display:grid;place-items:center}
+  .stickers span.new{animation:pop .6s ease 2}
+  .stickers svg{width:24px;height:24px;overflow:visible}
+  .lock{position:relative;width:40px;height:40px;border-radius:50%;border:2px solid var(--line);background:#ffffffaa;display:grid;place-items:center;padding:0;touch-action:none}
+  .lock>svg.icon{width:18px;height:18px;opacity:.55}
+  .lock .ring{position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);transform:rotate(-90deg);pointer-events:none}
+  .lock .ring circle{fill:none;stroke:var(--coral);stroke-width:4;stroke-dasharray:120;stroke-dashoffset:120}
+  .lock.holding .ring circle{transition:stroke-dashoffset 2s linear;stroke-dashoffset:0}
+  .lock.shake{animation:shake .35s}
+  @keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
 
   /* Your-turn bar */
-  .listen{display:flex;align-items:center;gap:10px;padding:6px 14px 8px;font-family:var(--display);font-weight:700;font-size:16px;color:var(--leaf-deep)}
-  .listen .ear{width:12px;height:12px;border-radius:50%;background:var(--leaf);flex:none}
+  .listen{display:flex;align-items:center;gap:10px;padding:6px 14px 8px;font-family:var(--display);font-weight:800;font-size:19px;color:var(--leaf-deep)}
+  .listen .ear{width:14px;height:14px;border-radius:50%;background:var(--leaf);flex:none;transition:transform .1s}
   .listen.mic-live .ear{animation:pulse 1s infinite}
   .listen .bar{flex:1;height:8px;border-radius:99px;background:#E4F1FB;overflow:hidden;min-width:60px}
   .listen .bar b{display:block;height:100%;width:100%;background:var(--sun);border-radius:99px}
 
   /* Stage */
-  .stage{flex:1;min-height:0;display:flex;flex-direction:column;background:#ffffffb3;border:3px solid var(--paper);border-radius:28px;overflow:hidden}
-  .buddybar{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:2px dashed var(--line)}
-  .pip{width:72px;height:72px;flex:none}
+  .stage{flex:1;min-height:0;display:flex;flex-direction:column;background:#ffffffb3;border:3px solid var(--paper);border-radius:28px;overflow:hidden;margin-bottom:12px}
+  .buddybar{display:flex;align-items:center;gap:14px;padding:26px 16px 10px;border-bottom:2px dashed var(--line)}
+  .pip{width:72px;height:72px;flex:none;overflow:visible}
+  .buddybar .pip{width:96px;height:96px;cursor:pointer}
   .pip.big{width:150px;height:150px}
   .pip .mouth{transform-origin:60px 78px;transition:transform .12s}
   .pip.talking .mouth{animation:talk .28s infinite alternate}
@@ -72,8 +83,9 @@
   .pip .lids{transform-origin:60px 52px;animation:blink 4.5s infinite}
   @keyframes blink{0%,94%,100%{transform:scaleY(0)}96%{transform:scaleY(1)}}
   .pip.bounce{animation:bob 1.6s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(-5px)}}
   .pip.mood-excited{animation:hop .5s ease-in-out 3}
-  @keyframes hop{50%{transform:translateY(-10px) scale(1.06)}}
+  @keyframes hop{50%{transform:translateY(-12px) scale(1.07)}}
   .pip.mood-curious{animation:tilt 1.4s ease-in-out infinite}
   @keyframes tilt{50%{transform:rotate(-8deg)}}
   .pip.mood-silly{animation:wiggle .6s ease-in-out 4}
@@ -81,79 +93,116 @@
   .pip.listening{animation:lean 2.2s ease-in-out infinite}
   @keyframes lean{50%{transform:rotate(6deg) translateY(2px)}}
   .pip.listening .mouth{transform:scaleY(.55)}
-  .acts{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 8px}
-  .acts button{border:2px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 12px;font-family:var(--display);font-weight:700;font-size:15px;color:var(--ink-soft)}
-  .acts button:active{background:var(--sun)}
-  .msg.kid.draft{opacity:.7;border-style:dashed}
-  .pip-msg{cursor:pointer}
-  @keyframes bob{50%{transform:translateY(-5px)}}
+  .pip.party{animation:dance .45s ease-in-out 6}
+  @keyframes dance{25%{transform:translateY(-14px) rotate(-12deg) scale(1.1)}75%{transform:translateY(-6px) rotate(12deg) scale(1.05)}}
   .buddymeta{display:flex;flex-direction:column;gap:2px;min-width:0}
-  .buddymeta b{font-family:var(--display);font-size:22px;line-height:1}
-  .topic{font-size:15px;color:var(--ink-soft)}
+  .buddymeta b{font-family:var(--display);font-size:26px;line-height:1}
+  .topic{font-size:16px;color:var(--ink-soft)}
   .topic em{font-style:normal;font-weight:700;color:var(--leaf-deep)}
   .mode{margin-left:auto;font-size:13px;color:var(--ink-soft);text-align:right}
 
-  .chat{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:12px}
-  .msg{max-width:86%;padding:12px 16px;border-radius:22px;line-height:1.45;font-size:21px;box-shadow:0 2px 0 #0000000d}
-  .msg.pip-msg{align-self:flex-start;background:var(--paper);border:2px solid var(--line);border-bottom-left-radius:6px}
+  .chat{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:12px;overscroll-behavior:contain}
+  .msg{max-width:86%;padding:12px 16px;border-radius:22px;line-height:1.45;font-size:22px;box-shadow:0 2px 0 #0000000d;animation:in .3s ease}
+  @keyframes in{from{transform:translateY(8px) scale(.97);opacity:.3}}
+  .msg.pip-msg{align-self:flex-start;background:var(--paper);border:2px solid var(--line);border-bottom-left-radius:6px;cursor:pointer}
   .msg.kid{align-self:flex-end;background:var(--kid);border:2px solid #F3D675;border-bottom-right-radius:6px}
+  .msg.kid.draft{opacity:.75;border-style:dashed}
   .msg .seg{transition:background .2s;border-radius:6px}
   .msg .seg.now{background:#FFE58A}
   .msg .again{display:inline-flex;align-items:center;gap:4px;margin-top:6px;border:none;background:none;color:var(--coral-deep);font-family:var(--display);font-weight:700;font-size:15px;padding:0}
   .msg .again svg{width:18px;height:18px}
-  .earned{align-self:flex-end;font-family:var(--display);font-weight:700;color:var(--leaf-deep);font-size:16px;display:flex;gap:4px;align-items:center}
-  .earned svg{width:18px;height:18px}
+  .earned{align-self:flex-end;font-family:var(--display);font-weight:800;color:var(--leaf-deep);font-size:17px;display:flex;gap:4px;align-items:center;animation:in .3s ease}
+  .earned svg{width:20px;height:20px}
+  .surprise{align-self:center;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#FFF6D6,#FFE3F1);border:3px solid var(--sun);border-radius:20px;padding:10px 16px;font-family:var(--display);font-weight:800;font-size:21px;animation:pop .6s ease}
+  .surprise svg{width:40px;height:40px;overflow:visible}
   .typing{display:inline-flex;gap:6px;padding:4px 2px}
   .typing i{width:10px;height:10px;border-radius:50%;background:var(--coral);animation:dot 1s infinite}
   .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
   @keyframes dot{50%{transform:translateY(-6px);opacity:.5}}
+  .flystar{position:fixed;left:0;top:0;width:34px;height:34px;z-index:20;pointer-events:none}
 
-  /* Starters + input */
+  /* Helpers (shown only when the child is stuck) */
   .starters{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 8px}
   .starters:empty{display:none}
-  .starters .hint{width:100%;font-size:14px;color:var(--ink-soft)}
-  .starters button{border:2px dashed var(--coral);background:#FFF1EC;border-radius:16px;padding:6px 12px;font-size:17px;color:var(--ink)}
-  .composer{display:flex;gap:8px;align-items:flex-end;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));border-top:2px dashed var(--line);background:var(--paper)}
+  .starters .hint{width:100%;font-size:15px;color:var(--ink-soft)}
+  .starters button{border:2px dashed var(--coral);background:#FFF1EC;border-radius:16px;padding:8px 14px;font-size:19px;color:var(--ink)}
+  .acts{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 8px}
+  .acts button{border:2px solid var(--line);background:var(--paper);border-radius:999px;padding:6px 14px;font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink-soft)}
+  .acts button:active{background:var(--sun)}
+
+  /* Talk area */
+  .composer{display:flex;gap:10px;align-items:flex-end;justify-content:center;padding:12px 14px 14px;border-top:2px dashed var(--line);background:var(--paper)}
+  .typebox{flex:1;display:flex;gap:8px;align-items:flex-end;min-width:0}
   .composer textarea{flex:1;min-width:0;resize:none;border:3px solid var(--line);border-radius:18px;padding:10px 14px;font-size:20px;line-height:1.35;max-height:130px;background:#FBFDFF}
   .composer textarea:focus{border-color:var(--sun-deep);outline:none}
   .send{background:var(--coral);border:none;color:#fff;border-radius:18px;padding:0 18px;height:52px;font-family:var(--display);font-weight:800;font-size:20px;box-shadow:0 4px 0 var(--coral-deep)}
   .send:active{transform:translateY(3px);box-shadow:0 1px 0 var(--coral-deep)}
   .send:disabled{opacity:.5}
-  .mic{background:var(--sun);border:none;border-radius:50%;width:52px;height:52px;display:grid;place-items:center;box-shadow:0 4px 0 var(--sun-deep);flex:none}
-  .mic svg{width:26px;height:26px}
-  .mic.call{animation:pulse 1.2s infinite;outline:4px solid #2FB67C55}
+  .mic{background:var(--sun);border:none;border-radius:50%;width:56px;height:56px;display:grid;place-items:center;box-shadow:0 4px 0 var(--sun-deep);flex:none;position:relative}
+  .mic svg{width:28px;height:28px}
+  .composer.voice-only .mic{width:84px;height:84px;box-shadow:0 6px 0 var(--sun-deep)}
+  .composer.voice-only .mic svg{width:40px;height:40px}
+  .mic.call{animation:pulse 1.2s infinite;outline:5px solid #2FB67C55}
+  .mic.on{background:var(--leaf);box-shadow:0 4px 0 var(--leaf-deep);animation:pulse 1s infinite}
+  .mic.on::after{content:"";position:absolute;inset:-10px;border-radius:50%;border:4px solid var(--leaf);opacity:.5;animation:ripple 1.4s infinite}
+  @keyframes ripple{from{transform:scale(.85);opacity:.6}to{transform:scale(1.35);opacity:0}}
+  @keyframes pulse{50%{transform:scale(1.08)}}
   .kbhint{display:flex;align-items:center;gap:8px;padding:0 14px 8px;font-size:15px;color:var(--ink-soft)}
   .kbhint svg{width:20px;height:20px;flex:none}
-  .mic.on{background:var(--leaf);box-shadow:0 4px 0 var(--leaf-deep);animation:pulse 1s infinite}
-  @keyframes pulse{50%{transform:scale(1.08)}}
 
-  /* Welcome */
+  /* Welcome + come-back screens */
   .welcome{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;padding:20px 14px}
   .welcome h1{font-family:var(--display);font-weight:800;font-size:clamp(30px,7vw,46px);line-height:1.05;margin:0;text-wrap:balance}
   .welcome p{margin:0;font-size:20px;color:var(--ink-soft);max-width:30ch}
   .ages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;width:100%;max-width:460px;margin-top:6px}
-  .age{aspect-ratio:1/1.15;max-width:100%;border:none;border-radius:50% 50% 46% 46%;font-family:var(--display);font-weight:800;font-size:clamp(34px,9vw,52px);color:#fff;position:relative;box-shadow:inset -8px -10px 0 #00000014;transition:transform .15s}
+  .age{aspect-ratio:1/1.15;max-width:100%;border:none;border-radius:50% 50% 46% 46%;font-family:var(--display);font-weight:800;font-size:clamp(34px,9vw,52px);color:#fff;position:relative;box-shadow:inset -8px -10px 0 #00000014;transition:transform .15s,opacity .2s}
   .age small{display:block;font-size:14px;font-weight:700;margin-top:-10px;opacity:.9}
-  .age:hover{transform:translateY(-4px) rotate(-2deg)}
   .age:nth-child(1){background:var(--coral)}.age:nth-child(2){background:var(--leaf)}
-  .age:nth-child(3){background:#5B8DEF}.age:nth-child(4){background:#B56BD8}
-  .grownup{font-size:14px;color:var(--ink-soft);max-width:46ch;text-align:left;background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:8px 14px}
-  .grownup summary{cursor:pointer;font-family:var(--display);font-weight:700;font-size:15px;color:var(--ink)}
-  .grownup p{font-size:14px;margin:8px 0;max-width:none}
-  .grownup code{background:#EEF6FD;padding:1px 5px;border-radius:5px}
+  .age:nth-child(3){background:var(--blue)}.age:nth-child(4){background:var(--berry)}
+  .ages.chosen .age{opacity:.25;transform:scale(.9)}
+  .ages.chosen .age.picked{opacity:1;transform:scale(1.15)}
+  .setup{font-size:15px!important;max-width:40ch!important}
+  .bigbtn{border:none;background:var(--leaf);color:#fff;font-family:var(--display);font-weight:800;font-size:28px;border-radius:24px;padding:16px 30px;box-shadow:0 6px 0 var(--leaf-deep);animation:pulse 1.4s infinite}
+
+  /* Grown-up gate and settings */
+  .overlay{position:fixed;inset:0;z-index:30;background:#1E2A4A99;display:flex;align-items:center;justify-content:center;padding:16px;-webkit-user-select:none}
+  .sheet{background:var(--paper);border-radius:22px;width:100%;max-width:560px;max-height:100%;overflow-y:auto;padding:18px 20px;font-size:16px;box-shadow:0 20px 60px #0004}
+  .sheet.small{max-width:360px;text-align:center}
+  .sheet h2{font-family:var(--display);font-size:24px;margin:0}
+  .sheet h3{font-family:var(--display);font-size:18px;margin:16px 0 6px}
+  .sheet p{margin:6px 0;color:var(--ink-soft);font-size:15px}
+  .sheet label{display:flex;align-items:center;gap:8px;margin:8px 0;flex-wrap:wrap}
+  .sheet select,.sheet input[type=password],.sheet input[type=text],.sheet input[inputmode]{border:2px solid var(--line);border-radius:10px;padding:6px 8px;font-size:16px;background:#fff;min-width:0}
+  .sheet input[type=checkbox]{width:20px;height:20px;accent-color:var(--leaf)}
+  .sheethead{display:flex;align-items:center;gap:10px;justify-content:space-between;position:sticky;top:-18px;background:var(--paper);padding-block:4px 8px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .btn{border:2px solid var(--line);background:var(--sky);border-radius:12px;padding:8px 14px;font-size:16px}
+  .btn.primary{background:var(--leaf);border-color:var(--leaf-deep);color:#fff;font-family:var(--display);font-weight:800}
+  .btn.warn{background:#FFF1EC;border-color:var(--coral)}
+  .speedrow{display:flex;gap:6px;flex-wrap:wrap}
+  .speedrow button{border:2px solid var(--line);background:var(--paper);border-radius:14px;padding:5px 10px;font-family:var(--display);font-weight:700;font-size:15px;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.1}
+  .speedrow button .dots{display:flex;gap:2px}
+  .speedrow button .dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+  .speedrow button .dots i.on{background:var(--ink)}
+  .speedrow button[aria-pressed="true"]{background:var(--sun);border-color:var(--sun-deep)}
+  .iconbtn{background:var(--paper);border:2px solid var(--line);border-radius:999px;padding:6px 12px;display:inline-flex;gap:6px;align-items:center}
+  .iconbtn svg{width:22px;height:22px}
   .keyrow{display:flex;gap:6px;flex-wrap:wrap}
-  .keyrow input{flex:1;min-width:0;border:2px solid var(--line);border-radius:10px;padding:6px 8px;font-size:14px}
-  .keyrow button{border:2px solid var(--line);background:var(--sky);border-radius:10px;padding:6px 10px;font-size:14px}
+  .keyrow input{flex:1}
+  #gateQ{font-family:var(--display);font-weight:800;font-size:28px;color:var(--ink)}
+  #gateIn{font-size:26px!important;width:120px;text-align:center}
+  .sheet ol{margin:4px 0;padding-left:22px;color:var(--ink-soft);font-size:15px}
 
-  .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:14px;font-size:15px;max-width:calc(100% - 48px);text-align:center;z-index:5}
+  #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:25}
+  .toast{position:fixed;left:50%;bottom:calc(110px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:14px;font-size:15px;max-width:calc(100% - 48px);text-align:center;z-index:40}
 
-  @media (max-width:520px){
+  @media (max-width:560px){
     .brand{font-size:22px}
-    .speed .lbl{width:100%}
-    .speed button{padding:4px 7px;font-size:13px}
-    .settings{margin-left:0;width:100%}
-    .msg{font-size:19px;max-width:92%}
-    .pip{width:56px;height:56px}
+    .gift{min-width:96px}
+    .stickers span{width:26px;height:26px}
+    .stickers svg{width:19px;height:19px}
+    .msg{font-size:20px;max-width:92%}
+    .buddybar .pip{width:70px;height:70px}
     .pip.big{width:120px;height:120px}
     .send{padding:0 14px;font-size:18px}
   }
@@ -164,33 +213,19 @@
 <div class="app">
   <header class="top">
     <div class="brand">Talk with <span>Pip</span></div>
-    <div class="pill stars" id="stars" title="Stars for whole sentences">
-      <svg viewBox="0 0 24 24"><path fill="#FFC93C" stroke="#E8A800" stroke-width="1.5" d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/></svg>
-      <span id="starCount">0</span>
+    <div class="loot">
+      <div class="pill stars" id="stars" title="Stars for whole sentences">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#FFC93C" stroke="#E8A800" stroke-width="1.5" d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/></svg>
+        <span id="starCount">0</span>
+      </div>
+      <div class="gift"><span class="giftbar"><b id="giftFill"></b></span><span id="giftText">3 more stars for a surprise!</span></div>
     </div>
-    <button class="iconbtn" id="muteBtn" aria-label="Turn Pip's voice off" title="Voice on/off">
-      <svg id="spkOn" viewBox="0 0 24 24" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-linecap="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#FFC93C"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg>
-      <svg id="spkOff" viewBox="0 0 24 24" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-linecap="round" hidden><path d="M4 9h4l5-4v14l-5-4H4z" fill="#ddd"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+    <div class="stickers" id="stickers" aria-label="Pip's surprises"></div>
+    <button class="lock" id="lockBtn" type="button" aria-label="Grown-ups: press and hold for settings" title="Grown-ups: press and hold">
+      <svg class="ring" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="19"/></svg>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#1E2A4A" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
     </button>
   </header>
-
-  <div class="speed" role="group" aria-label="How fast Pip talks">
-    <span class="lbl">Talking speed</span>
-    <div id="speedBtns" style="display:contents"></div>
-    <div class="settings">
-      <label for="voiceSel" id="voiceWrap">Voice <select id="voiceSel"></select></label>
-      <label for="waitSel">Nudge after
-        <select id="waitSel">
-          <option value="3">3 sec</option><option value="5">5 sec</option><option value="8">8 sec</option>
-          <option value="10">10 sec</option><option value="15">15 sec</option><option value="20">20 sec</option><option value="0">Never</option>
-        </select>
-      </label>
-      <label for="autoMic" id="autoMicWrap"><input type="checkbox" id="autoMic"> Mic on after Pip talks</label>
-      <label for="pauseSel" id="pauseWrap">Wait for pauses
-        <select id="pauseSel"><option value="short">Short</option><option value="medium">Medium</option><option value="long">Long</option></select>
-      </label>
-    </div>
-  </div>
 
   <main class="stage">
     <section class="welcome" id="welcome">
@@ -203,17 +238,13 @@
         <button class="age" data-age="7">7<small>years</small></button>
         <button class="age" data-age="8">8<small>years</small></button>
       </div>
-      <details class="grownup" id="grownup">
-        <summary>Grown-up settings</summary>
-        <p id="aiStatus">Checking for AI…</p>
-        <p>If you started Pip with <code>server.js</code> and an API key, you don't need to do anything here. Otherwise you can paste an Anthropic API key below. It is saved only in this browser.</p>
-        <div class="keyrow">
-          <input type="password" id="keyInput" placeholder="sk-ant-…" autocomplete="off" aria-label="Anthropic API key">
-          <button type="button" id="keySave">Save key</button>
-          <button type="button" id="keyClear">Remove</button>
-        </div>
-        <p><label for="brainSel">Pip's brain: <select id="brainSel"><option value="quick">Quick (Haiku, fastest)</option><option value="smart">Smart (Sonnet, best judgement)</option></select></label></p>
-      </details>
+      <p class="setup" id="setupNote" hidden>Grown-ups: press and hold the lock in the top corner to add your Claude key and settings.</p>
+    </section>
+
+    <section class="welcome" id="resume" hidden>
+      <svg class="pip big bounce" id="pipResume" viewBox="0 0 120 120" aria-hidden="true"></svg>
+      <h1 id="resumeTitle">Pip missed you!</h1>
+      <button class="bigbtn" id="resumeBtn" type="button">Let's talk!</button>
     </section>
 
     <section id="chatView" hidden style="display:flex;flex-direction:column;flex:1;min-height:0">
@@ -232,7 +263,6 @@
         <button type="button" data-act="rather">Would you rather?</button>
         <button type="button" data-act="teach">Teach Pip</button>
         <button type="button" data-act="joke">Something silly</button>
-        <button type="button" data-act="topic">New topic</button>
       </div>
       <div class="listen" id="listen" hidden>
         <span class="ear"></span><span id="listenText">Your turn!</span>
@@ -242,18 +272,97 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3" fill="#FFC93C"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
         <span>To talk: tap the box below, then tap the <b>microphone key</b> on the keyboard. Pip sends it when you stop.</span>
       </div>
-      <div class="kbhint" id="frameNote" hidden><span><b>Grown-ups:</b> the Claude app blocks the microphone for pages like this. For hands-free talking, open the standalone Pip in Safari or Chrome.</span></div>
+      <div class="kbhint" id="frameNote" hidden><span><b>Grown-ups:</b> this page is inside another app, which blocks the microphone. Open Pip directly in Safari or Chrome.</span></div>
       <form class="composer" id="composer">
         <button type="button" class="mic" id="micBtn" aria-label="Talk to Pip (tap again when you are done)" hidden>
           <svg viewBox="0 0 24 24" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3" fill="#fff"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
         </button>
-        <textarea id="input" rows="1" placeholder="Tell Pip in a whole sentence…" aria-label="Your message to Pip"></textarea>
-        <button class="send" id="sendBtn" type="submit">Send</button>
+        <div class="typebox" id="typeBox">
+          <textarea id="input" rows="1" placeholder="Tell Pip in a whole sentence…" aria-label="Your message to Pip"></textarea>
+          <button class="send" id="sendBtn" type="submit">Send</button>
+        </div>
       </form>
     </section>
   </main>
-  <div style="height:12px"></div>
 </div>
+
+<!-- Grown-up check: press and hold the lock, then answer a sum -->
+<div class="overlay" id="gate" hidden>
+  <div class="sheet small">
+    <h2>Grown-ups only</h2>
+    <p id="gateQ">23 + 18 = ?</p>
+    <div class="row" style="justify-content:center">
+      <input id="gateIn" inputmode="numeric" autocomplete="off" aria-label="Answer">
+      <button class="btn primary" id="gateOk" type="button">Open</button>
+    </div>
+    <p id="gateMsg"></p>
+    <button class="btn" id="gateCancel" type="button">Back to Pip</button>
+  </div>
+</div>
+
+<div class="overlay" id="panel" hidden>
+  <div class="sheet" role="dialog" aria-label="Grown-up settings">
+    <div class="sheethead"><h2>Grown-up settings</h2><button class="btn primary" id="panelClose" type="button">Back to Pip</button></div>
+
+    <h3>Claude AI</h3>
+    <p id="aiStatus">Checking for AI…</p>
+    <div class="keyrow">
+      <input type="password" id="keyInput" placeholder="sk-ant-…" autocomplete="off" aria-label="Anthropic API key">
+      <button type="button" class="btn" id="keySave">Save key</button>
+      <button type="button" class="btn" id="keyClear">Remove</button>
+    </div>
+    <p>The key is saved only in this browser on this device. Never put it in a file on GitHub.</p>
+    <label for="brainSel">Pip's brain
+      <select id="brainSel"><option value="quick">Quick: Haiku 4.5 (fastest replies)</option><option value="smart">Smart: Sonnet 5.5 (best judgement)</option></select>
+    </label>
+
+    <h3>Pip's voice</h3>
+    <div class="speedrow" id="speedBtns" role="group" aria-label="How fast Pip talks"></div>
+    <label for="voiceSel" id="voiceWrap">Voice <select id="voiceSel"></select></label>
+    <div class="row">
+      <button class="iconbtn" id="muteBtn" type="button" aria-label="Turn Pip's voice off">
+        <svg id="spkOn" viewBox="0 0 24 24" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-linecap="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#FFC93C"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg>
+        <svg id="spkOff" viewBox="0 0 24 24" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-linecap="round" hidden><path d="M4 9h4l5-4v14l-5-4H4z" fill="#ddd"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+        <span id="muteText">Pip's voice is on</span>
+      </button>
+      <label for="sfxBox"><input type="checkbox" id="sfxBox"> Fun sounds</label>
+    </div>
+
+    <h3>Listening</h3>
+    <label for="autoMic" id="autoMicWrap"><input type="checkbox" id="autoMic"> Mic turns on by itself after Pip talks</label>
+    <label for="pauseSel" id="pauseWrap">Wait for pauses
+      <select id="pauseSel"><option value="short">Short</option><option value="medium">Medium</option><option value="long">Long</option></select>
+    </label>
+    <label for="waitSel">Encourage a quiet child after
+      <select id="waitSel">
+        <option value="3">3 sec</option><option value="5">5 sec</option><option value="8">8 sec</option>
+        <option value="10">10 sec</option><option value="15">15 sec</option><option value="20">20 sec</option><option value="0">Never</option>
+      </select>
+    </label>
+    <label for="typeBoxOn"><input type="checkbox" id="typeBoxOn"> Show the typing box (off = talking only, fewer distractions)</label>
+
+    <h3>Your child</h3>
+    <label for="ageSel">Age
+      <select id="ageSel"><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select>
+    </label>
+    <div class="row">
+      <button class="btn" id="newChatBtn" type="button">Start a new chat</button>
+      <button class="btn warn" id="resetBtn" type="button">Reset everything</button>
+    </div>
+    <p id="resetMsg"></p>
+
+    <h3>Keep your child on Pip</h3>
+    <p>On iPhone or iPad, Guided Access locks the screen to Pip so the address bar, tabs and other apps can't be tapped:</p>
+    <ol>
+      <li>Settings → Accessibility → Guided Access → turn it on and set a passcode.</li>
+      <li>Open Pip in Safari, then press the side (or top, or Home) button three times quickly.</li>
+      <li>Draw a circle around Safari's address bar and tabs to block them, then tap Start.</li>
+      <li>To finish, press the button three times again and type the passcode.</li>
+    </ol>
+  </div>
+</div>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -270,7 +379,8 @@ const PIP_SVG = `
   <g class="mouth"><path d="M50 72q10 12 20 0z" fill="#7A1E2C"/><path d="M54 78q6 4 12 0" fill="#FF8FA3"/></g>`;
 document.getElementById('pipBig').innerHTML = PIP_SVG;
 document.getElementById('pipSmall').innerHTML = PIP_SVG;
-const pips = [document.getElementById('pipBig'), document.getElementById('pipSmall')];
+document.getElementById('pipResume').innerHTML = PIP_SVG;
+const pips = [document.getElementById('pipBig'), document.getElementById('pipSmall'), document.getElementById('pipResume')];
 const setTalking = on => pips.forEach(p => p.classList.toggle('talking', on));
 const MOODS = ['mood-happy','mood-excited','mood-curious','mood-silly','mood-calm'];
 function setMood(m){ pips.forEach(p => { MOODS.forEach(c => p.classList.remove(c)); if(m) p.classList.add('mood-' + m); }); }
@@ -306,9 +416,124 @@ function paintMute(){
   document.getElementById('spkOn').hidden = muted;
   document.getElementById('spkOff').hidden = !muted;
   muteBtn.setAttribute('aria-label', muted ? "Turn Pip's voice on" : "Turn Pip's voice off");
+  document.getElementById('muteText').textContent = muted ? "Pip's voice is off" : "Pip's voice is on";
 }
 muteBtn.onclick = () => { muted = !muted; store.set('pip-muted', muted?'1':'0'); paintMute(); if(muted) stopSpeaking(); };
 paintMute();
+
+/* ---------- Surprises: Pip earns a new outfit every 3 stars ---------- */
+const ACC = [
+  {id:'party',  name:'party hat',       box:'34 -28 52 52', svg:'<path d="M60 -16 L44 20 L76 20 Z" fill="#5B8DEF"/><path d="M53 1 L67 1 M49 11 L71 11" stroke="#FFC93C" stroke-width="4"/><circle cx="60" cy="-18" r="6" fill="#FFC93C"/>'},
+  {id:'glasses',name:'pair of cool sunglasses', box:'28 38 64 28', svg:'<rect x="31" y="44" width="26" height="17" rx="7" fill="#1E2A4A"/><rect x="63" y="44" width="26" height="17" rx="7" fill="#1E2A4A"/><path d="M57 50h6" stroke="#1E2A4A" stroke-width="4"/><path d="M36 49h8M68 49h8" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".6"/>'},
+  {id:'crown',  name:'shiny crown',     box:'34 -8 52 36', svg:'<path d="M38 24 L40 2 L50 14 L60 -2 L70 14 L80 2 L82 24 Z" fill="#FFC93C" stroke="#E8A800" stroke-width="2" stroke-linejoin="round"/><circle cx="60" cy="12" r="3.5" fill="#FF4F7B"/><circle cx="47" cy="17" r="2.5" fill="#5B8DEF"/><circle cx="73" cy="17" r="2.5" fill="#5B8DEF"/>'},
+  {id:'flower', name:'pretty flower',   box:'70 8 32 32', svg:'<g transform="translate(86 24)"><circle cy="-8" r="6" fill="#FF8FC7"/><circle cx="7.6" cy="-2.5" r="6" fill="#FF8FC7"/><circle cx="4.7" cy="6.5" r="6" fill="#FF8FC7"/><circle cx="-4.7" cy="6.5" r="6" fill="#FF8FC7"/><circle cx="-7.6" cy="-2.5" r="6" fill="#FF8FC7"/><circle r="5" fill="#FFC93C"/></g>'},
+  {id:'wizard', name:'wizard hat',      box:'28 -34 64 64', svg:'<path d="M60 -30 L40 22 L80 22 Z" fill="#7B5BD6"/><ellipse cx="60" cy="22" rx="30" ry="6" fill="#6246B8"/><path d="M58 0l2 4 4 1-3 3 1 4-4-2-4 2 1-4-3-3 4-1z" fill="#FFC93C"/>'},
+  {id:'bow',    name:'big bow',         box:'20 8 40 32', svg:'<g transform="translate(40 24) rotate(-20)"><path d="M0 0 L-15 -10 L-15 10 Z" fill="#FF4F7B"/><path d="M0 0 L15 -10 L15 10 Z" fill="#FF4F7B"/><circle r="4.5" fill="#E23A66"/></g>'},
+];
+const STAR_SVG = '<svg viewBox="0 0 24 24"><path fill="#FFC93C" stroke="#E8A800" stroke-width="1.5" d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/></svg>';
+const PER_SURPRISE = 3;
+let unlocked = 0;           // how many outfits Pip has earned
+let pendingUnlock = null;   // a surprise Pip should mention in its next reply
+function stickerSvg(a){ return `<svg viewBox="${a.box}" aria-hidden="true">${a.svg}</svg>`; }
+function setAccessory(){
+  const a = unlocked ? ACC[Math.min(unlocked, ACC.length) - 1] : null;
+  pips.forEach(p => {
+    const old = p.querySelector('.acc'); if(old) old.remove();
+    if(a) p.insertAdjacentHTML('beforeend', `<g class="acc">${a.svg}</g>`);
+  });
+}
+function paintRewards(fresh){
+  document.getElementById('starCount').textContent = stars;
+  const left = PER_SURPRISE - (stars % PER_SURPRISE);
+  document.getElementById('giftFill').style.width = ((stars % PER_SURPRISE) / PER_SURPRISE * 100) + '%';
+  document.getElementById('giftText').textContent = `${left} more star${left === 1 ? '' : 's'} for a surprise!`;
+  const box = document.getElementById('stickers');
+  box.innerHTML = ACC.slice(0, Math.min(unlocked, ACC.length)).map((a, i) =>
+    `<span class="${fresh && i === Math.min(unlocked, ACC.length) - 1 ? 'new' : ''}" title="${a.name}">${stickerSvg(a)}</span>`).join('');
+  setAccessory();
+}
+function saveRewards(){ store.set('pip-rewards', JSON.stringify({stars, unlocked})); }
+
+/* ---------- Fun sounds (made in the browser, no files) ---------- */
+let actx = null, sfxOn = store.get('pip-sfx') !== '0';
+function audioUnlock(){
+  try{
+    if(!actx){ const AC = window.AudioContext || window.webkitAudioContext; if(AC) actx = new AC(); }
+    if(actx && actx.state === 'suspended') actx.resume();
+  }catch(e){}
+}
+const SFX = {
+  turn:   [[660,0,.12],[990,.1,.2]],
+  star:   [[1047,0,.14,'triangle'],[1319,.08,.14,'triangle'],[1568,.16,.28,'triangle']],
+  unlock: [[523,0,.16,'square',.07],[659,.13,.16,'square',.07],[784,.26,.16,'square',.07],[1047,.39,.5,'triangle',.16]],
+  tickle: [[880,0,.08],[740,.07,.08],[988,.14,.08],[784,.21,.12]],
+};
+function sfx(kind){
+  if(!sfxOn || !actx || muted) return 0;
+  try{
+    if(actx.state === 'suspended') actx.resume();
+    const now = actx.currentTime + 0.02;
+    let end = 0;
+    for(const [f, t, d, type, v] of SFX[kind]){
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'sine'; o.frequency.setValueAtTime(f, now + t);
+      g.gain.setValueAtTime(0.0001, now + t);
+      g.gain.exponentialRampToValueAtTime(v || 0.16, now + t + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + t + d);
+      o.connect(g); g.connect(actx.destination);
+      o.start(now + t); o.stop(now + t + d + 0.05);
+      end = Math.max(end, t + d);
+    }
+    return Math.round(end * 1000) + 80;
+  }catch(e){ return 0; }
+}
+
+/* ---------- Confetti ---------- */
+const cvs = document.getElementById('confetti'), cctx = cvs.getContext('2d');
+let bits = [], confettiRaf = 0;
+function confetti(n){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const dpr = window.devicePixelRatio || 1;
+  cvs.width = innerWidth * dpr; cvs.height = innerHeight * dpr;
+  cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const colors = ['#FF7A59','#FFC93C','#2FB67C','#5B8DEF','#B56BD8','#FF8FC7'];
+  for(let i = 0; i < (n || 150); i++){
+    bits.push({x: innerWidth / 2 + (Math.random() - .5) * innerWidth * .4, y: innerHeight * .38,
+      vx: (Math.random() - .5) * 13, vy: -Math.random() * 13 - 4, s: 6 + Math.random() * 7,
+      c: colors[i % colors.length], r: Math.random() * 6, vr: (Math.random() - .5) * .35});
+  }
+  if(!confettiRaf) confettiRaf = requestAnimationFrame(confettiStep);
+}
+function confettiStep(){
+  cctx.clearRect(0, 0, innerWidth, innerHeight);
+  bits = bits.filter(b => b.y < innerHeight + 30);
+  for(const b of bits){
+    b.vy += .32; b.vx *= .99; b.x += b.vx; b.y += b.vy; b.r += b.vr;
+    cctx.save(); cctx.translate(b.x, b.y); cctx.rotate(b.r); cctx.fillStyle = b.c;
+    cctx.fillRect(-b.s / 2, -b.s / 4, b.s, b.s / 2); cctx.restore();
+  }
+  confettiRaf = bits.length ? requestAnimationFrame(confettiStep) : 0;
+  if(!bits.length) cctx.clearRect(0, 0, innerWidth, innerHeight);
+}
+
+// A star flies from the child's words up to the star counter.
+function flyStar(fromEl){
+  const to = document.getElementById('stars').getBoundingClientRect();
+  const from = fromEl ? fromEl.getBoundingClientRect() : {left: innerWidth / 2, top: innerHeight / 2, width: 0, height: 0};
+  const s = document.createElement('div');
+  s.className = 'flystar'; s.innerHTML = STAR_SVG;
+  document.body.appendChild(s);
+  const x0 = from.left + from.width / 2 - 17, y0 = from.top + from.height / 2 - 17;
+  const x1 = to.left + 8, y1 = to.top + 2;
+  const anim = s.animate ? s.animate([
+    {transform:`translate(${x0}px,${y0}px) scale(1.4) rotate(0deg)`},
+    {transform:`translate(${(x0 + x1) / 2}px,${Math.min(y0, y1) - 60}px) scale(1.8) rotate(180deg)`, offset:.45},
+    {transform:`translate(${x1}px,${y1}px) scale(.7) rotate(360deg)`}
+  ], {duration: 850, easing:'ease-in-out'}) : null;
+  const done = () => { s.remove(); const p = document.getElementById('stars'); p.classList.remove('pop'); void p.offsetWidth; p.classList.add('pop'); };
+  if(anim) anim.onfinish = done; else setTimeout(done, 10);
+}
+
 
 /* ---------- Voice (natural pacing) ---------- */
 const synth = window.speechSynthesis;
@@ -405,7 +630,7 @@ function addSeg(el, s){
 function finishBubble(el, text, isNudge){
   el.insertAdjacentHTML('beforeend', '<br><button class="again" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg>Say it again</button>');
   el.querySelector('.again').onclick = () => { if(!busy) sayAndWait(text, el); };
-  if(!isNudge){ lastPipText = text; lastPipEl = el; }
+  if(!isNudge){ lastPipText = text; lastPipEl = el; logMsg('p', text); }
   scrollDown();
 }
 function addPip(text, isNudge){
@@ -418,6 +643,8 @@ function addKid(text){
   const el = document.createElement('div');
   el.className = 'msg kid'; el.textContent = text;
   chat.appendChild(el); scrollDown();
+  logMsg('k', text);
+  return el;
 }
 function addThinking(){
   const el = document.createElement('div');
@@ -426,14 +653,31 @@ function addThinking(){
   chat.appendChild(el); scrollDown();
   return el;
 }
-function giveStar(){
+function giveStar(fromEl){
   stars++;
-  document.getElementById('starCount').textContent = stars;
-  starEl.classList.remove('pop'); void starEl.offsetWidth; starEl.classList.add('pop');
   const e = document.createElement('div');
   e.className = 'earned';
-  e.innerHTML = '<svg viewBox="0 0 24 24"><path fill="#FFC93C" stroke="#E8A800" stroke-width="1.5" d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/></svg>Whole sentence! +1 star';
+  e.innerHTML = STAR_SVG + 'Whole sentence! +1 star';
   chat.appendChild(e); scrollDown();
+  flyStar(fromEl);
+  let surprise = null;
+  if(stars % PER_SURPRISE === 0){
+    unlocked++;
+    surprise = unlocked <= ACC.length ? ACC[unlocked - 1] : {id:'super', name:''};
+    setTimeout(() => celebrate(surprise), 750);
+  } else sfx('star');
+  paintRewards(false);
+  saveRewards();
+  return surprise;
+}
+function celebrate(a){
+  sfx('unlock'); confetti(170);
+  pips.forEach(p => { p.classList.remove('party'); void p.getBoundingClientRect(); p.classList.add('party'); setTimeout(() => p.classList.remove('party'), 2800); });
+  const card = document.createElement('div');
+  card.className = 'surprise';
+  card.innerHTML = a.id === 'super' ? STAR_SVG + 'Super star! Keep talking!' : stickerSvg(a) + `Surprise! Pip got a ${esc(a.name)}!`;
+  chat.appendChild(card); scrollDown();
+  paintRewards(a.id !== 'super');
 }
 function showStarters(list){
   startersEl.innerHTML = '';
@@ -443,8 +687,14 @@ function showStarters(list){
   list.slice(0,3).forEach(s => {
     const b = document.createElement('button'); b.type = 'button'; b.textContent = s;
     b.onclick = () => {
-      const t = s.replace(/\s*(\.{3}|…|_+)\s*$/,'').trim() + ' ';
-      input.value = t; input.focus(); input.setSelectionRange(t.length, t.length); grow(); onKidActivity();
+      const t = s.replace(/\s*(\.{3}|…|_+)\s*$/,'').trim();
+      if(micOK && !kbMode){
+        if(!rec) startListening(false, true);
+        prefix = t; heard = t; starterText = t; showDraft(t); lastSpeechAt = Date.now(); onKidActivity();
+        listenText.textContent = 'Now finish the sentence out loud!';
+      } else {
+        input.value = t + ' '; input.focus(); input.setSelectionRange(input.value.length, input.value.length); grow(); onKidActivity();
+      }
     };
     startersEl.appendChild(b);
   });
@@ -527,13 +777,21 @@ function isWholeSentence(t){
   return w.length >= 4 && !isShort(t);
 }
 
-/* ---------- AI (standalone) ----------
-   Mode 1 "server": server.js holds the API key and forwards requests (recommended).
-   Mode 2 "direct": a grown-up pastes an API key into Grown-up settings; it stays in this browser.
-   Otherwise Pip uses the scripted simple mode. */
-const MODELS = {quick:'claude-haiku-4-5-20251001', smart:'claude-sonnet-5'};
+/* ---------- Claude AI ----------
+   "server": server.js holds the API key and passes replies through.
+   "direct": a grown-up saved an API key in Grown-up settings; it stays in this browser.
+   Otherwise Pip uses its simple scripted mode. */
+const MODELS = {quick:'claude-haiku-4-5-20251001', smart:'claude-sonnet-5-5'};
+const FALLBACK_MODEL = 'claude-haiku-4-5-20251001';
 let brain = store.get('pip-brain') === 'smart' ? 'smart' : 'quick';
-const MODEL = () => MODELS[brain];
+const modelBroken = {};   // models this account couldn't use; Pip switches to the fallback
+function modelNow(){ const m = MODELS[brain]; return modelBroken[m] ? FALLBACK_MODEL : m; }
+function aiBody(model, system, messages){
+  const b = {model, max_tokens: 400, system, messages, stream: true};
+  if(model.startsWith('claude-haiku-4')) b.temperature = 0.7;   // steady, on-topic replies
+  else b.thinking = {type: 'between_tools'};                    // start talking right away, no long think first
+  return b;
+}
 let aiMode = null;
 async function detectAI(){
   aiMode = null;
@@ -551,11 +809,11 @@ async function detectAI(){
 }
 function paintAIStatus(){
   const s = document.getElementById('aiStatus');
-  if(!s) return;
   s.textContent = aiMode === 'server' ? 'AI is on (using the server key).'
     : aiMode === 'direct' ? 'AI is on (using the key saved in this browser).'
     : 'AI is off. Pip will use simple scripted questions until you add a key.';
   document.getElementById('modeLine').textContent = aiMode ? '' : 'Simple mode';
+  document.getElementById('setupNote').hidden = !!aiMode;
 }
 detectAI();
 document.getElementById('brainSel').value = brain;
@@ -564,33 +822,38 @@ document.getElementById('keySave').onclick = () => {
   const k = document.getElementById('keyInput').value.trim();
   if(!k){ toast('Paste a key first.'); return; }
   store.set('pip-key', k); document.getElementById('keyInput').value = '';
-  detectAI().then(()=>toast(aiMode ? 'Key saved. Pip is ready!' : 'Could not save the key in this browser.'));
+  detectAI().then(() => toast(aiMode ? 'Key saved. Pip is ready!' : 'Could not save the key in this browser.'));
 };
 document.getElementById('keyClear').onclick = () => {
   try{ localStorage.removeItem('pip-key') }catch(e){}
-  detectAI().then(()=>toast('Key removed.'));
+  detectAI().then(() => toast('Key removed.'));
 };
 
+function sendAI(model, system, messages, signal){
+  if(aiMode === 'server')
+    return fetch('api/chat', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({system, messages, stream:true, model}), signal});
+  return fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{
+      'content-type':'application/json',
+      'x-api-key': store.get('pip-key') || '',
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify(aiBody(model, system, messages)),
+    signal
+  });
+}
 // Ask Claude and receive the answer as it is written (streaming), so Pip can start talking early.
 async function streamClaude(system, messages, {signal, onDelta}){
-  let r;
-  try{
-    if(aiMode === 'server'){
-      r = await fetch('api/chat', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({system, messages, stream:true, model: MODEL()}), signal});
-    } else {
-      r = await fetch('https://api.anthropic.com/v1/messages', {
-        method:'POST',
-        headers:{
-          'content-type':'application/json',
-          'x-api-key': store.get('pip-key') || '',
-          'anthropic-version':'2023-06-01',
-          'anthropic-dangerous-direct-browser-access':'true'
-        },
-        body: JSON.stringify({model: MODEL(), max_tokens: 400, temperature: 0.7, system, messages, stream: true}),
-        signal
-      });
-    }
-  }catch(e){ throw {code: e && e.name === 'AbortError' ? 'cancelled' : 'upstream_error'}; }
+  let model = modelNow(), r;
+  for(let attempt = 0; attempt < 2; attempt++){
+    try{ r = await sendAI(model, system, messages, signal); }
+    catch(e){ throw {code: e && e.name === 'AbortError' ? 'cancelled' : 'upstream_error'}; }
+    // A model this account can't use: switch to the fallback and try once more.
+    if((r.status === 400 || r.status === 404) && model !== FALLBACK_MODEL){ modelBroken[model] = true; model = FALLBACK_MODEL; continue; }
+    break;
+  }
   if(r.status === 401 || r.status === 403) throw {code:'not_granted'};
   if(r.status === 429 || r.status === 529) throw {code:'rate_limited'};
   if(!r.ok) throw {code:'upstream_error'};
@@ -626,6 +889,7 @@ async function streamClaude(system, messages, {signal, onDelta}){
 }
 const FATAL_MSG = "Pip's AI key isn't working, so Pip is using simple mode. A grown-up can fix it in Grown-up settings.";
 
+
 function parseJSON(text){
   try{ return JSON.parse(text) }catch(e){}
   const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/); if(fence){ try{ return JSON.parse(fence[1]) }catch(e){} }
@@ -647,6 +911,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 function aiOn(){ return !aiFailed && !!sample; }
 
 function userContent(kidText, note){
+  if(kidText == null && returning && profile.name)
+    return `(${profile.name} is back for a new chat. Greet them by name with excitement and ask what they want to talk about today.`
+      + (profile.likes.length ? ` Before, they said they like: ${profile.likes.join(', ')}. You may offer one of these as a choice.` : '') + ')';
   return kidText == null
     ? `(The child just chose age ${age} and tapped start. Say a happy hello, say your name is Pip, and ask the child's first name.)`
     : `The child said: "${kidText}"` + (note ? `\n(${note})` : '');
@@ -656,7 +923,9 @@ function noteFor(kidText, how, nudgeCount){
     ? 'This was a very short answer. Cheer, then kindly ask for a whole sentence and give one example sentence to copy.' : '';
   if(how === 'tap') note += ' The child tapped an activity button; do this activity about the current topic.';
   if(how === 'voice' && lowConfidence) note += ' Speech-to-text was unsure about some of these words; if the meaning is unclear, kindly check what they said.';
-  if(stars > 0 && stars % 5 === 0 && lastMeta.star) note += ` The child just earned star number ${stars}. Celebrate that in a few words.`;
+  if(pendingUnlock) note += pendingUnlock.id === 'super'
+    ? ' The child just earned a big surprise for talking in whole sentences. Cheer about it in a few words.'
+    : ` The child just earned a surprise: Pip now wears a ${pendingUnlock.name}. Say thank you and mention it in a few happy words.`;
   if(how === 'voice') note += ' The child said this out loud (speech-to-text).';
   if(nudgeCount >= 2) note += ' The child was quiet for a while before answering.';
   return note.trim();
@@ -750,6 +1019,7 @@ const OFF_QS = [
   x => [`What is the funniest thing about ${x}?`, `The funniest thing is...`],
 ];
 function offlineReply(kidText){
+  if(kidText == null && returning && profile.name){ OFF.stage = 1; return {say:`Hi again, ${profile.name}! I'm so happy you're back. What do you want to talk about today?`, topic:'Welcome back', starters:['I want to talk about...']}; }
   if(kidText == null) return {say:"Hi there! I'm Pip. I love to chat! What is your name?", topic:'Getting to know you', starters:['My name is...']};
   if(isShort(kidText) && !(OFF.stage === 0 && /^[A-Za-z]+[.!]?$/.test(kidText.trim())))
     return {say:`Ooh, thank you! Can you tell me in a whole sentence? Like this: ${currentStarter()}`, topic:'', starters:[currentStarter()]};
@@ -757,6 +1027,7 @@ function offlineReply(kidText){
   if(OFF.stage === 0){
     const m = kidText.match(/(?:name is|i am|i'm|call me)\s+([A-Za-z]+)/i) || kidText.trim().match(/^([A-Za-z]+)[.!]?$/);
     OFF.name = m ? m[1] : '';
+    if(OFF.name) profile.name = OFF.name;
     OFF.stage = 1;
     return {say:`${OFF.name ? 'Hi, ' + OFF.name + '!' : 'Hooray!'} What a lovely name! What do you love doing most?`, topic:'Getting to know you', starters:['I love...','My favorite thing is...']};
   }
@@ -774,7 +1045,7 @@ function currentStarter(){ return lastStarters[0] || (OFF.stage === 0 ? 'My name
 
 /* ---------- Turn handling ---------- */
 async function pipTurn(kidText, job){
-  busy = true; sendBtn.disabled = true; showStarters([]);
+  busy = true; sendBtn.disabled = true; showStarters([]); helpersShown = false;
   const how = lastMeta.how, quietNudges = lastMeta.nudges;
   nudges = 0;
   const thinking = (job && job.sentences.length) ? null : addThinking();
@@ -800,7 +1071,7 @@ async function pipTurn(kidText, job){
       recentOpeners = [...recentOpeners, say.split(/[\s,!.?]+/).slice(0, 1).join(' ')].filter(Boolean).slice(-4);
       finishBubble(result.el, say);
       lastStarters = Array.isArray(used.meta.starters) ? used.meta.starters.map(String) : [];
-      showStarters(lastStarters);
+      pendingUnlock = null; returning = false; saveSession();
       busy = false; sendBtn.disabled = false;
       if(!result.interrupted) startWaiting();
       return;
@@ -821,8 +1092,9 @@ async function pipTurn(kidText, job){
   if(thinking) thinking.remove();
   if(reply.topic) document.getElementById('topicLine').innerHTML = 'Talking about <em>' + esc(reply.topic) + '</em>';
   lastStarters = reply.starters || [];
+  pendingUnlock = null; returning = false;
   const el = addPip(reply.say);
-  showStarters(reply.starters);
+  saveSession();
   busy = false; sendBtn.disabled = false;
   sayAndWait(reply.say, el);
 }
@@ -851,17 +1123,25 @@ async function sayAndWait(text, el){
   const finished = await speak(text, el);
   if(finished && !busy) startWaiting();
 }
+let helpersShown = false;   // starters and activities appear only once the child seems stuck
 function startWaiting(){
+  if(panelOpen) return;
   listenEl.hidden = false;
-  document.getElementById('acts').hidden = !aiOn();
+  tickled = false; tapTimes = [];
+  if(helpersShown){ showStarters(lastStarters); startersEl.hidden = false; document.getElementById('acts').hidden = !aiOn(); }
   setListeningFace(true);
   paintListen();
-  if(autoMic) startListening();
+  if(autoMic){
+    const d = sfx('turn');                       // a little "your turn" chime, then the mic opens
+    if(d) setTimeout(() => { if(!listenEl.hidden && !busy) startListening(); }, d);
+    else startListening();
+  }
   armTimer();
 }
 function endWaiting(){
   clearTimeout(silenceTimer); silenceTimer = null;
   listenEl.hidden = true;
+  startersEl.hidden = true;
   document.getElementById('acts').hidden = true;
   setListeningFace(false);
   stopListening();
@@ -900,6 +1180,7 @@ function nudge(){
   if(busy || listenEl.hidden) return;
   if(rec && heard.trim()){ armTimer(); return; }   // child is mid-answer: let them finish
   nudges++;
+  if(nudges === 1) helpersShown = true;
   const starter = (lastStarters[0] || '').replace(/\s*(\.{3}|…|_+)\s*$/,'').trim();
   let say;
   if(input.value.trim()){
@@ -926,8 +1207,11 @@ function sendText(t, how, job){
   endWaiting();
   stopSpeaking();
   input.value = ''; grow(); prevLen = 0; dictating = false;
-  addKid(t);
-  if(isWholeSentence(t)) giveStar();
+  const kidEl = addKid(t);
+  if(isWholeSentence(t) && how !== 'tap'){
+    const surprise = giveStar(kidEl);
+    if(surprise){ pendingUnlock = surprise; if(job){ job.ctl.abort(); job = null; } }   // Pip's reply should mention it
+  }
   pipTurn(t, job);
 }
 document.getElementById('acts').addEventListener('click', e => {
@@ -944,16 +1228,6 @@ document.getElementById('composer').addEventListener('submit', e => {
   sendText(input.value);
 });
 
-document.getElementById('ages').addEventListener('click', e => {
-  const b = e.target.closest('.age'); if(!b) return;
-  age = Number(b.dataset.age);
-  // unlock speech on this tap
-  if(synth){ const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); }
-  primeMic();
-  document.getElementById('welcome').hidden = true;
-  const cv = document.getElementById('chatView'); cv.hidden = false;
-  pipTurn(null);
-});
 
 /* ---------- Microphone: turns on when it's the child's turn, off when they're done ----------
    How Pip decides the child is finished:
@@ -973,7 +1247,7 @@ const TOUCH = 'ontouchstart' in window;
 // Inside the Claude app (or any embedded frame) the browser blocks the microphone, so don't pretend.
 let micOK = !!SR && !IN_FRAME && (window.isSecureContext !== false);
 let rec = null, heard = '', prefix = '', lastSpeechAt = 0, tickTimer = null, hearWatch = null;
-let lastHeard = '', lowConfidence = false, draftEl = null;
+let lastHeard = '', lowConfidence = false, draftEl = null, starterText = '';
 // Pip learns how long this child's thinking pauses are, so it doesn't cut in too early.
 let pauseLearned = 0;
 function notePause(ms){ if(ms < 4000) pauseLearned = Math.max(pauseLearned * 0.9, Math.min(ms * 1.15, 2600)); }
@@ -1069,7 +1343,7 @@ function tick(){
     ear.style.transform = `scale(${1 + Math.min(lvl * 18, 1.4)})`;
   }
   const text = heard.trim();
-  if(!text) return;
+  if(!text || text === starterText) return;
   if(DONE_PHRASE.test(text)){
     const rest = text.replace(DONE_PHRASE, '').trim();
     if(rest) return finishTurn(rest);
@@ -1106,6 +1380,7 @@ function micBlocked(reason){
   document.getElementById('autoMicWrap').hidden = true;
   document.getElementById('pauseWrap').hidden = true;
   useKeyboard();
+  paintTyping();
   paintListen();
   if(reason) toast(reason + (TOUCH ? ' Tap the box, then the mic key on the keyboard to talk.' : ' Type to Pip instead.'));
 }
@@ -1123,7 +1398,7 @@ function startListening(keepText, fromTap){
   if(!micOK || rec || busy || kbMode) return;
   if(synth && synth.speaking) return;                 // never listen while Pip is talking
   if(needsTap && !fromTap){ paintListen(); return; }  // the phone wants a tap this time
-  if(!keepText){ heard = ''; prefix = ''; restartTries = 0; lastHeard = ''; lowConfidence = false; showDraft(''); }
+  if(!keepText){ heard = ''; prefix = ''; restartTries = 0; lastHeard = ''; lowConfidence = false; starterText = ''; showDraft(''); }
   else prefix = heard;
   let r;
   try{
@@ -1246,6 +1521,202 @@ setInterval(() => {
     sendText(text, 'voice');
   }
 }, 200);
+
+/* ---------- Staying on Pip ----------
+   - The age is chosen once. After that the age screen never comes back (not even after a
+     reload) unless a grown-up changes it behind the lock.
+   - A reload or a return later picks up the same chat, with a single "Let's talk!" button.
+   - Settings live behind a press-and-hold lock plus a sum only a grown-up can do quickly. */
+const SESSION_KEY = 'pip-session', FRESH_MS = 6 * 3600 * 1000;
+let inChat = false, panelOpen = false, returning = false, restoring = false, chatLog = [];
+function logMsg(w, t){
+  if(restoring) return;
+  chatLog.push({w, t}); chatLog = chatLog.slice(-40);
+  saveSession();
+}
+function saveSession(){
+  store.set(SESSION_KEY, JSON.stringify({v:1, age, ts: Date.now(), turns: turns.slice(-30), profile,
+    recentOpeners, lastPipText, lastStarters, log: chatLog, topicHtml: document.getElementById('topicLine').innerHTML}));
+}
+function loadSession(){ try{ return JSON.parse(store.get(SESSION_KEY) || 'null'); }catch(e){ return null; } }
+function unlockSpeech(){
+  if(synth){ const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); }
+  audioUnlock();
+  primeMic();
+}
+function showChat(){
+  document.getElementById('welcome').hidden = true;
+  document.getElementById('resume').hidden = true;
+  document.getElementById('chatView').hidden = false;
+  inChat = true;
+}
+
+// The age screen: one tap, then it's locked in.
+let ageChosen = false;
+const agesEl = document.getElementById('ages');
+agesEl.addEventListener('click', e => {
+  const b = e.target.closest('.age'); if(!b || ageChosen) return;
+  ageChosen = true;
+  age = Number(b.dataset.age);
+  store.set('pip-age', String(age));
+  document.getElementById('ageSel').value = String(age);
+  agesEl.classList.add('chosen'); b.classList.add('picked');
+  agesEl.querySelectorAll('.age').forEach(x => x.disabled = true);
+  unlockSpeech();
+  sfx('star');
+  setTimeout(() => { showChat(); pipTurn(null); }, 450);
+}, true);
+
+// Coming back (reload, or opening Pip again later)
+document.getElementById('resumeBtn').addEventListener('click', () => {
+  unlockSpeech();
+  showChat();
+  if(chatLog.length && lastPipText){
+    const q = lastQuestion();
+    const say = `Yay, you're back${profile.name ? ', ' + profile.name : ''}! ${q || "What do you want to talk about?"}`;
+    sayAndWait(say, addPip(say, true));
+  } else {
+    returning = !!profile.name;
+    pipTurn(null);
+  }
+});
+
+function boot(){
+  try{ const r = JSON.parse(store.get('pip-rewards') || 'null'); if(r){ stars = r.stars | 0; unlocked = r.unlocked | 0; } }catch(e){}
+  paintRewards(false);
+  const savedAge = Number(store.get('pip-age'));
+  if(!(savedAge >= 5 && savedAge <= 8)) return;          // first visit: show the age screen
+  age = savedAge; ageChosen = true;
+  document.getElementById('ageSel').value = String(age);
+  const s = loadSession();
+  if(s && s.profile) profile = Object.assign({name:'', likes:[], topic:'', facts:[]}, s.profile);
+  if(s && Date.now() - s.ts < FRESH_MS && Array.isArray(s.log) && s.log.length){
+    turns = s.turns || []; recentOpeners = s.recentOpeners || []; lastStarters = s.lastStarters || [];
+    chatLog = s.log;
+    restoring = true;
+    for(const m of chatLog){ if(m.w === 'k') addKid(m.t); else addPip(m.t); }
+    restoring = false;
+    lastPipText = s.lastPipText || lastPipText;
+    if(s.topicHtml) document.getElementById('topicLine').innerHTML = s.topicHtml;
+  } else {
+    profile.topic = ''; profile.facts = [];     // a new day: keep the name and likes, start fresh
+  }
+  document.getElementById('resumeTitle').textContent = profile.name ? `Pip missed you, ${profile.name}!` : 'Pip missed you!';
+  document.getElementById('welcome').hidden = true;
+  document.getElementById('resume').hidden = false;
+}
+
+/* ---------- Turning taps into talking ----------
+   Tapping around instead of answering makes Pip giggle and ask again. */
+let tapTimes = [], tickled = false;
+document.getElementById('chatView').addEventListener('pointerdown', e => {
+  if(listenEl.hidden || busy || panelOpen) return;
+  if(e.target.closest('button, textarea, input, .starters, .acts')) return;
+  const now = Date.now();
+  tapTimes = tapTimes.filter(t => now - t < 2200); tapTimes.push(now);
+  const onPip = !!e.target.closest('#pipSmall');
+  if(onPip){ setMood('silly'); sfx('tickle'); }
+  if((tapTimes.length >= 3 || (onPip && tapTimes.length >= 2)) && !tickled){
+    tickled = true; tapTimes = [];
+    const q = lastQuestion();
+    const say = pick(["Hee hee, that tickles!", "Ha ha, silly fingers!", "Ooh, you found my tickle spot!"])
+      + ' Now tell me with your voice. ' + (q || "What do you want to talk about?");
+    setTimeout(() => { if(!busy && !listenEl.hidden) sayAndWait(say, addPip(say, true)); }, 250);
+  }
+});
+
+// Leaving the page and coming back: Pip pauses, then welcomes the child back.
+let wasAway = false;
+document.addEventListener('visibilitychange', () => {
+  if(!inChat || panelOpen) return;
+  if(document.hidden){ wasAway = true; stopSpeaking(); endWaiting(); return; }
+  if(wasAway && !busy){
+    wasAway = false;
+    const q = lastQuestion();
+    const say = `Yay, you came back! ${q || "Let's keep talking!"}`;
+    setTimeout(() => sayAndWait(say, addPip(say, true)), 400);
+  }
+});
+window.addEventListener('beforeunload', e => { if(inChat){ e.preventDefault(); e.returnValue = ''; } });
+
+/* ---------- Grown-up lock: press and hold, then answer a sum ---------- */
+const lockBtn = document.getElementById('lockBtn');
+let holdTimer = null, gateAnswer = 0;
+function holdStart(e){
+  e.preventDefault();
+  lockBtn.classList.add('holding');
+  holdTimer = setTimeout(() => { holdTimer = null; lockBtn.classList.remove('holding'); openGate(); }, 2000);
+}
+function holdEnd(){
+  if(holdTimer){ clearTimeout(holdTimer); holdTimer = null; lockBtn.classList.remove('shake'); void lockBtn.offsetWidth; lockBtn.classList.add('shake'); }
+  lockBtn.classList.remove('holding');
+}
+lockBtn.addEventListener('pointerdown', holdStart);
+['pointerup','pointerleave','pointercancel'].forEach(ev => lockBtn.addEventListener(ev, holdEnd));
+lockBtn.addEventListener('contextmenu', e => e.preventDefault());
+function pauseConversation(){ panelOpen = true; stopSpeaking(); endWaiting(); }
+function openGate(){
+  pauseConversation();
+  const a = 21 + Math.floor(Math.random() * 29), b = 12 + Math.floor(Math.random() * 28);
+  gateAnswer = a + b;
+  document.getElementById('gateQ').textContent = `${a} + ${b} = ?`;
+  document.getElementById('gateMsg').textContent = '';
+  const inp = document.getElementById('gateIn'); inp.value = '';
+  document.getElementById('gate').hidden = false;
+  setTimeout(() => inp.focus(), 50);
+}
+function checkGate(){
+  if(Number(document.getElementById('gateIn').value) === gateAnswer){
+    document.getElementById('gate').hidden = true;
+    document.getElementById('panel').hidden = false;
+  } else {
+    document.getElementById('gateMsg').textContent = 'Not quite. Try again.';
+    document.getElementById('gateIn').value = '';
+  }
+}
+document.getElementById('gateOk').onclick = checkGate;
+document.getElementById('gateIn').addEventListener('keydown', e => { if(e.key === 'Enter') checkGate(); });
+document.getElementById('gateCancel').onclick = () => { document.getElementById('gate').hidden = true; resumeConversation(); };
+
+let pendingNewChat = false, resetArmed = false;
+function resumeConversation(){
+  panelOpen = false;
+  if(!inChat) return;
+  if(pendingNewChat){
+    pendingNewChat = false;
+    turns = []; chatLog = []; recentOpeners = []; lastStarters = []; lastPipText = '';
+    profile.topic = ''; profile.facts = [];
+    chat.innerHTML = '';
+    document.getElementById('topicLine').textContent = 'Getting to know you';
+    returning = !!profile.name;
+    if(!busy) pipTurn(null);
+    return;
+  }
+  if(!busy && lastPipText) sayAndWait(lastPipText, lastPipEl);
+}
+document.getElementById('panelClose').onclick = () => { document.getElementById('panel').hidden = true; resetArmed = false; document.getElementById('resetMsg').textContent = ''; resumeConversation(); };
+document.getElementById('ageSel').onchange = e => { age = Number(e.target.value); store.set('pip-age', String(age)); saveSession(); };
+document.getElementById('newChatBtn').onclick = () => { pendingNewChat = true; toast('A new chat starts when you go back to Pip.'); };
+document.getElementById('resetBtn').onclick = () => {
+  if(!resetArmed){ resetArmed = true; document.getElementById('resetMsg').textContent = 'This clears the age, the chat, the stars and the surprises. Tap "Reset everything" again to confirm.'; return; }
+  ['pip-age', SESSION_KEY, 'pip-rewards'].forEach(k => { try{ localStorage.removeItem(k); }catch(e){} });
+  inChat = false;
+  location.reload();
+};
+const sfxBox = document.getElementById('sfxBox');
+sfxBox.checked = sfxOn;
+sfxBox.onchange = () => { sfxOn = sfxBox.checked; store.set('pip-sfx', sfxOn ? '1' : '0'); if(sfxOn){ audioUnlock(); sfx('star'); } };
+let typeOn = store.get('pip-type') === '1';
+const typeBoxOn = document.getElementById('typeBoxOn');
+typeBoxOn.checked = typeOn;
+typeBoxOn.onchange = () => { typeOn = typeBoxOn.checked; store.set('pip-type', typeOn ? '1' : '0'); paintTyping(); };
+function paintTyping(){
+  const show = kbMode || typeOn || micBtn.hidden;
+  document.getElementById('typeBox').hidden = !show;
+  document.getElementById('composer').classList.toggle('voice-only', !show);
+}
+paintTyping();
+boot();
 </script>
 </body>
 </html>

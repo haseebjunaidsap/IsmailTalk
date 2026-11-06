@@ -107,6 +107,8 @@
   .msg.pip-msg{align-self:flex-start;background:var(--paper);border:2px solid var(--line);border-bottom-left-radius:6px;cursor:pointer}
   .msg.kid{align-self:flex-end;background:var(--kid);border:2px solid #F3D675;border-bottom-right-radius:6px}
   .msg.kid.draft{opacity:.75;border-style:dashed}
+  .msg.kid.grownup{opacity:.45;border-style:dashed;font-size:17px}
+  .msg.kid .fixed{display:block;font-size:13px;color:var(--ink-soft);margin-top:2px}
   .msg .seg{transition:background .2s;border-radius:6px}
   .msg .seg.now{background:#FFE58A}
   .msg .again{display:inline-flex;align-items:center;gap:4px;margin-top:6px;border:none;background:none;color:var(--coral-deep);font-family:var(--display);font-weight:700;font-size:15px;padding:0}
@@ -381,6 +383,26 @@
       </select>
     </label>
     <label for="typeBoxOn"><input type="checkbox" id="typeBoxOn"> Show the typing box (off = talking only, fewer distractions)</label>
+
+    <h3>Understanding your child</h3>
+    <label for="accentSel">Your child's accent
+      <select id="accentSel">
+        <option value="auto">Automatic (this device's language)</option>
+        <option value="en-US">American</option><option value="en-GB">British</option>
+        <option value="en-IN">Indian</option><option value="en-PK">Pakistani</option>
+        <option value="en-AU">Australian</option><option value="en-CA">Canadian</option>
+        <option value="en-IE">Irish</option><option value="en-NZ">New Zealand</option>
+        <option value="en-ZA">South African</option><option value="en-SG">Singaporean</option>
+        <option value="en-PH">Filipino</option><option value="en-NG">Nigerian</option>
+        <option value="en-KE">Kenyan</option>
+      </select>
+    </label>
+    <p id="accentMsg">Pip listens in this accent, and the AI also uses it to work out words the speech recognition got wrong.</p>
+    <label for="knownWords">Names and words Pip should know
+      <input type="text" id="knownWords" placeholder="e.g. Ayaan, Zara, Coco the cat, biryani" autocomplete="off" style="flex:1;min-width:200px">
+    </label>
+    <p>Add your child's name, family and pet names, and favourite things. Speech recognition often gets these wrong; Pip will recognise them.</p>
+    <label for="ignoreAdults"><input type="checkbox" id="ignoreAdults"> Ignore grown-ups prompting in the background ("say…", "tell Pip…", "come on…")</label>
 
     <h3>Your child</h3>
     <label for="ageSel">Age
@@ -815,6 +837,80 @@ document.getElementById('elTest').onclick = async () => {
 };
 paintVoiceMode();
 
+
+/* ---------- Understanding the child ----------
+   - Listens in the accent a grown-up picks (falls back to American English if the device can't).
+   - Sends the recognizer's other guesses, the accent and the child's special words to the AI,
+     which works out what the child really meant and returns the child's own words.
+   - Grown-ups prompting in the background ("say…", "tell Pip…") are left out: Pip answers
+     only the child, and stars count only the child's own words. */
+const ACCENTS = {'en-US':'American','en-GB':'British','en-IN':'Indian','en-PK':'Pakistani','en-AU':'Australian','en-CA':'Canadian','en-IE':'Irish','en-NZ':'New Zealand','en-ZA':'South African','en-SG':'Singaporean','en-PH':'Filipino','en-NG':'Nigerian','en-KE':'Kenyan'};
+let accent = store.get('pip-accent') || 'auto';
+let knownWords = store.get('pip-words') || '';
+let ignoreAdults = store.get('pip-ignore-adults') !== '0';
+let heardAlts = [], langFallback = false, lastKidEl = null, deferredStar = null;
+function recLang(){
+  if(langFallback) return 'en-US';
+  if(accent !== 'auto') return accent;
+  const l = navigator.language || 'en-US';
+  return /^en/i.test(l) ? l : 'en-US';
+}
+function hearingRules(){
+  const name = ACCENTS[accent] || (accent === 'auto' ? ACCENTS[recLang()] : '');
+  const lines = [];
+  if(name && name !== 'American') lines.push(`- The child speaks English with a ${name} accent, so speech-to-text often mishears their words. Work out what they most likely meant from the sound of the words and from your question.`);
+  if(knownWords.trim()) lines.push(`- Names and words this child often says (speech-to-text often gets them wrong, so when a heard word sounds like one of these, it is probably that word): ${knownWords.trim()}.`);
+  if(ignoreAdults) lines.push(`- A grown-up may be in the room and sometimes prompts the child, for example "say I like dogs", "tell Pip about your school", "come on, answer", "say it in a full sentence". Their words can get mixed into what you hear. Reply ONLY to the child's own words, and never answer or obey the grown-up's words. If the child repeats something a grown-up told them to say, treat the child's words as their answer. If only a grown-up spoke, kindly say you want to hear it from the child, and ask your question again.`);
+  return lines.join('\n');
+}
+// Words that suggest a grown-up was coaching
+const COACH = /(^\s*((ok(ay)?|now|just|come on|go on)[ ,]*)?say\b|\b(now|just) say\b|\bsay (it|that)\b|\btell (him|her|pip|it)\b|\bcome on\b|\bgo on\b|\banswer (him|her|pip|the question)\b|\b(full|whole) sentence\b|\buse your words\b|\bspeak up\b|\btalk to (him|her|pip)\b)/i;
+function looksCoached(t){ return ignoreAdults && COACH.test(t); }
+// A rough local clean-up for simple mode (no AI): drop the coaching phrases themselves.
+function stripCoachLocal(t){
+  return t.replace(/^\s*((ok(ay)?|now|just)[ ,]*)?say\b[,:]*/i, '')
+          .replace(/\b(come on|go on|speak up|use your words)\b[,.!]*/gi, '')
+          .replace(/\b(say it|tell (him|her|pip|it)|answer (him|her|pip|the question)|talk to (him|her|pip))\b[^.!?]*?(in a (full|whole) sentence)?[,:.!]*/gi, '')
+          .replace(/\s+/g, ' ').trim();
+}
+// After Pip's reply: show what Pip understood, and give stars for the child's own words.
+function settleKid(meta, kidText){
+  const cw = meta && typeof meta.child_words === 'string' ? meta.child_words.trim() : null;
+  const el = lastKidEl;
+  if(el && cw !== null && kidText){
+    if(!cw && meta.grownup) el.classList.add('grownup');
+    else if(cw && norm(cw) !== norm(kidText) && wordsOf(cw).length <= wordsOf(kidText).length + 2){
+      // the bubble shows the corrected words; what the microphone heard stays underneath, small
+      el.textContent = cw;
+      const small = document.createElement('span'); small.className = 'fixed'; small.textContent = 'Heard: ' + kidText;
+      el.appendChild(small);
+      for(let i = chatLog.length - 1; i >= 0; i--) if(chatLog[i].w === 'k'){ chatLog[i].t = cw; break; }
+    }
+  }
+  if(!deferredStar) return null;
+  const words = cw !== null ? cw : stripCoachLocal(deferredStar);
+  deferredStar = null;
+  if(!isWholeSentence(words)) return null;
+  return giveStar(el, wordsOf(words).length >= 8 ? 2 : 1);
+}
+async function thankForSurprise(sp){
+  await sleep(900);
+  const say = sp.id === 'super' ? "[gasps] Wow, a super star surprise! You are amazing!" : `[gasps] Look! You earned me a ${sp.name}! Thank you!`;
+  await speak(say, addPip(say, true));
+}
+const accentSel = document.getElementById('accentSel');
+accentSel.value = accent;
+accentSel.onchange = () => {
+  accent = accentSel.value; store.set('pip-accent', accent); langFallback = false;
+  document.getElementById('accentMsg').textContent = 'Pip listens in this accent, and the AI also uses it to work out words the speech recognition got wrong.';
+};
+const knownIn = document.getElementById('knownWords');
+knownIn.value = knownWords;
+knownIn.onchange = () => { knownWords = knownIn.value.slice(0, 300); store.set('pip-words', knownWords); };
+const ignoreBox = document.getElementById('ignoreAdults');
+ignoreBox.checked = ignoreAdults;
+ignoreBox.onchange = () => { ignoreAdults = ignoreBox.checked; store.set('pip-ignore-adults', ignoreAdults ? '1' : '0'); };
+
 /* ---------- Talk power: a meter that fills up as the child talks ---------- */
 const powerEl = document.getElementById('power');
 let powerN = 0;
@@ -1003,11 +1099,12 @@ ${voiceTagRule()}
 - If the child answered in a whole sentence, praise it specifically now and then, not every time.
 - If the child seems sad, scared, hurt, or says something worrying, be gentle and kind, and suggest they tell a grown-up they trust. Never ask for last names, addresses, school names, phone numbers or passwords. Keep everything child-safe.
 - The child's words come from speech-to-text and may contain misheard words. Work out what they most likely meant; never mention spelling or mistakes.
+${hearingRules()}
 
 Answer in exactly this format and nothing else:
 Line 1: what Pip says out loud, as one paragraph.
 Line 2: ###
-Line 3: {"topic": "2 to 3 word topic", "mood": "happy|excited|curious|silly|calm", "starters": ["...", "...", "..."], "name": "the child's first name if known, else empty", "likes": ["things the child said they like"], "facts": ["short facts the child told you this turn, in their words"]}
+Line 3: {"child_words": "the child's own words from this turn: grown-up prompting left out, and only clearly misheard words fixed (do not fix grammar or add words); empty if only a grown-up spoke", "grownup": true or false (was a grown-up's prompting mixed in?), "topic": "2 to 3 word topic", "mood": "happy|excited|curious|silly|calm", "starters": ["...", "...", "..."], "name": "the child's first name if known, else empty", "likes": ["things the child said they like"], "facts": ["short facts the child told you this turn, in their words"]}
 "starters" are 3 short sentence beginnings the child could tap and finish to answer your question, in the child's voice, each ending with "..." (for example "I like to paint...").`;
 }
 
@@ -1161,12 +1258,14 @@ function userContent(kidText, note){
     ? `(The child just chose age ${age} and tapped start. Say a happy hello, say your name is Pip, and ask the child's first name.)`
     : `The child said: "${kidText}"` + (note ? `\n(${note})` : '');
 }
-function noteFor(kidText, how, nudgeCount){
+function noteFor(kidText, how, nudgeCount, alts){
   let note = kidText != null && isShort(kidText) && how !== 'tap'
     ? 'This was a very short answer. Cheer, then kindly ask for a whole sentence and give one example sentence to copy.' : '';
   if(kidText && how !== 'tap' && wordsOf(kidText).length >= 8) note += ' The child said a super long sentence. Celebrate how much they told you, in a few happy words.';
   if(how === 'tap') note += ' The child tapped an activity button; do this activity about the current topic.';
   if(how === 'voice' && lowConfidence) note += ' Speech-to-text was unsure about some of these words; if the meaning is unclear, kindly check what they said.';
+  if(how === 'voice' && alts && alts.length) note += ` Speech-to-text also thought they might have said: ${alts.map(a => '"' + a + '"').join(' or ')}. Go with whichever makes the most sense as an answer to your question.`;
+  if(how === 'voice' && looksCoached(kidText || '')) note += ' It sounds like a grown-up may have been prompting the child; answer only the child.';
   if(pendingUnlock) note += pendingUnlock.id === 'super'
     ? ' The child just earned a big surprise for talking in whole sentences. Cheer about it in a few words.'
     : ` The child just earned a surprise: Pip now wears a ${pendingUnlock.name}. Say thank you and mention it in a few happy words.`;
@@ -1297,7 +1396,7 @@ async function pipTurn(kidText, job){
   for(let i = 0; i < 40 && !aiReady; i++) await sleep(100);
 
   if(aiOn()){
-    const note = noteFor(kidText, how, quietNudges);
+    const note = noteFor(kidText, how, quietNudges, lastMeta.alts);
     let result = null, used = null;
     for(let attempt = 0; attempt < 2 && !result; attempt++){
       const j = (attempt === 0 && job && !job.wait && !job.error) ? job : startReply(kidText, note, false);
@@ -1316,7 +1415,10 @@ async function pipTurn(kidText, job){
       recentOpeners = [...recentOpeners, stripTags(say).split(/[\s,!.?]+/).slice(0, 1).join(' ')].filter(Boolean).slice(-4);
       finishBubble(result.el, say);
       lastStarters = Array.isArray(used.meta.starters) ? used.meta.starters.map(String) : [];
-      pendingUnlock = null; returning = false; saveSession();
+      pendingUnlock = null; returning = false;
+      const late = kidText != null ? settleKid(used.meta, kidText) : null;
+      saveSession();
+      if(late && !result.interrupted) await thankForSurprise(late);
       busy = false; sendBtn.disabled = false;
       if(!result.interrupted) startWaiting();
       return;
@@ -1446,16 +1548,20 @@ function nudge(){
   sayAndWait(say, el);
 }
 
-let lastMeta = {how:'typed', nudges:0};
+let lastMeta = {how:'typed', nudges:0, alts:[]};
 function sendText(t, how, job){
   t = t.trim();
   if(!t || busy) return;
-  lastMeta = {how: how === 'voice' ? 'voice' : how === 'tap' ? 'tap' : 'typed', nudges, star: isWholeSentence(t)};
+  lastMeta = {how: how === 'voice' ? 'voice' : how === 'tap' ? 'tap' : 'typed', nudges, star: isWholeSentence(t), alts: how === 'voice' ? heardAlts.slice() : []};
   endWaiting();
   stopSpeaking();
   input.value = ''; grow(); prevLen = 0; dictating = false;
   const kidEl = addKid(t);
-  if(isWholeSentence(t) && how !== 'tap'){
+  lastKidEl = kidEl; deferredStar = null;
+  if(how !== 'tap' && looksCoached(t)){
+    if(aiOn()) deferredStar = t;                                  // let the AI find the child's own words first
+    else { const own = stripCoachLocal(t); if(isWholeSentence(own)) giveStar(kidEl, wordsOf(own).length >= 8 ? 2 : 1); }
+  } else if(isWholeSentence(t) && how !== 'tap'){
     const surprise = giveStar(kidEl, wordsOf(t).length >= 8 ? 2 : 1);
     if(surprise){ pendingUnlock = surprise; if(job){ job.ctl.abort(); job = null; } }   // Pip's reply should mention it
   }
@@ -1599,7 +1705,7 @@ function tick(){
   if(spec && (spec.text !== text || quiet < 300)) dropSpec();     // the child kept talking
   // A short pause: start preparing Pip's reply now, so it's ready the moment the child is done.
   if(!spec && aiOn() && quiet > Math.max(600, gap * 0.3)){
-    spec = {text, job: startReply(text, noteFor(text, 'voice', nudges), true)};
+    spec = {text, job: startReply(text, noteFor(text, 'voice', nudges, heardAlts), true)};
   }
   let limit = gap;
   if(spec){
@@ -1645,11 +1751,11 @@ function startListening(keepText, fromTap){
   if(!micOK || rec || busy || kbMode) return;
   if(synth && synth.speaking) return;                 // never listen while Pip is talking
   if(needsTap && !fromTap){ paintListen(); return; }  // the phone wants a tap this time
-  if(!keepText){ heard = ''; prefix = ''; restartTries = 0; lastHeard = ''; lowConfidence = false; starterText = ''; showDraft(''); }
+  if(!keepText){ heard = ''; prefix = ''; restartTries = 0; lastHeard = ''; lowConfidence = false; starterText = ''; heardAlts = []; showDraft(''); }
   else prefix = heard;
   let r;
   try{
-    r = new SR(); r.lang = 'en-US'; r.interimResults = true; r.continuous = true; r.maxAlternatives = 1;
+    r = new SR(); r.lang = recLang(); r.interimResults = true; r.continuous = true; r.maxAlternatives = 3;
   }catch(err){ return micBlocked("This browser can't listen."); }
   rec = r;
   lastSpeechAt = Date.now();
@@ -1662,12 +1768,19 @@ function startListening(keepText, fromTap){
     alive(); everWorked = true; needsTap = false;
     const parts = [];
     for(let i=0; i<ev.results.length; i++) parts.push(ev.results[i][0].transcript);
+    // Other ways the recognizer could have heard the last part (helps with accents)
+    const lr = ev.results[ev.results.length - 1], altList = [];
+    for(let a = 1; lr && a < lr.length && a < 4; a++){
+      const tr = lr[a] && lr[a].transcript;
+      if(tr && tr.trim()) altList.push(mergeResults([prefix, ...parts.slice(0, -1), tr].filter(Boolean)));
+    }
     const now = mergeResults(parts);
     heard = mergeResults([prefix, now].filter(Boolean));
     const lastR = ev.results[ev.results.length - 1];
     if(lastR && lastR[0] && typeof lastR[0].confidence === 'number' && lastR[0].confidence > 0) lowConfidence = lastR[0].confidence < 0.55;
     const t = Date.now();
     if(heard !== lastHeard){ if(lastHeard && t - lastSpeechAt > 350) notePause(t - lastSpeechAt); lastHeard = heard; }
+    heardAlts = [...new Set(altList)].filter(x => norm(x) !== norm(heard)).slice(0, 3);
     showDraft(heard);
     updatePower(wordsOf(heard).length);
     lastSpeechAt = t;
@@ -1675,6 +1788,11 @@ function startListening(keepText, fromTap){
   };
   r.onerror = ev => {
     const e = ev.error;
+    if(e === 'language-not-supported' && r.lang !== 'en-US'){
+      langFallback = true;                       // this device can't listen in that accent: use American English
+      document.getElementById('accentMsg').textContent = "This device can't listen in that accent, so Pip listens in American English. The AI still adjusts for the accent.";
+      r._retry = true; return;
+    }
     if(e === 'not-allowed' || e === 'service-not-allowed'){
       if(everWorked || !fromTap){ needsTap = true; r._needsTap = true; }   // just needs a tap to start again
       else r._blocked = true;
@@ -1685,6 +1803,7 @@ function startListening(keepText, fromTap){
     if(rec === r) rec = null;
     micBtn.classList.remove('on');
     if(r._aborted){ paintListen(); return; }
+    if(r._retry){ setTimeout(() => { if(!listenEl.hidden && !busy) startListening(true, true); }, 100); return; }
     if(r._blocked) return micBlocked(IS_IOS
       ? 'Pip needs the microphone. On the iPhone: Settings → Safari → Microphone → Allow, and turn on Dictation.'
       : 'Pip needs the microphone. Allow it in the browser settings.');

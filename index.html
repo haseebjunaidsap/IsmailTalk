@@ -193,6 +193,17 @@
   #gateIn{font-size:26px!important;width:120px;text-align:center}
   .sheet ol{margin:4px 0;padding-left:22px;color:var(--ink-soft);font-size:15px}
 
+  .power{display:flex;align-items:center;gap:10px;padding:0 14px 10px}
+  .power .track{flex:1;height:18px;border-radius:99px;background:#EEF6FD;border:2px solid var(--line);overflow:hidden}
+  .power .track b{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#8EE3B5,var(--leaf));transition:width .25s cubic-bezier(.3,1.4,.5,1)}
+  .power.whole .track b{background:linear-gradient(90deg,var(--sun),var(--coral))}
+  .power.super .track b{background:linear-gradient(90deg,var(--coral),var(--berry))}
+  #powerText{font-family:var(--display);font-weight:800;font-size:19px;color:var(--ink-soft);display:flex;align-items:center;gap:3px;min-width:10ch}
+  #powerText svg{width:22px;height:22px}
+  .power.whole #powerText,.power.super #powerText{color:var(--coral-deep)}
+  .power.bump #powerText{animation:pop .4s}
+  .pip.nod{animation:nod .3s ease}
+  @keyframes nod{50%{transform:translateY(5px) rotate(-4deg) scale(1.04)}}
   #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:25}
   .toast{position:fixed;left:50%;bottom:calc(110px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:14px;font-size:15px;max-width:calc(100% - 48px);text-align:center;z-index:40}
 
@@ -268,6 +279,9 @@
         <span class="ear"></span><span id="listenText">Your turn!</span>
         <span class="bar" id="waitBar"><b id="waitFill"></b></span>
       </div>
+      <div class="power" id="power" hidden aria-live="polite">
+        <span class="track"><b id="powerFill"></b></span><span id="powerText">Say it!</span>
+      </div>
       <div class="kbhint" id="kbHint" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3" fill="#FFC93C"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
         <span>To talk: tap the box below, then tap the <b>microphone key</b> on the keyboard. Pip sends it when you stop.</span>
@@ -317,8 +331,35 @@
     </label>
 
     <h3>Pip's voice</h3>
+    <label for="voiceMode">Voice type
+      <select id="voiceMode"><option value="device">This device's voice (free)</option><option value="natural">Natural human voice (ElevenLabs)</option></select>
+    </label>
+    <div id="naturalBox">
+      <p>A lifelike voice that laughs, gasps and gets excited. It needs an ElevenLabs API key (a separate account from Claude, at elevenlabs.io). The key is saved only in this browser.</p>
+      <div class="keyrow">
+        <input type="password" id="elKey" placeholder="ElevenLabs API key" autocomplete="off" aria-label="ElevenLabs API key">
+        <button type="button" class="btn" id="elSave">Save key</button>
+        <button type="button" class="btn" id="elClear">Remove</button>
+      </div>
+      <label for="elVoice">Pip sounds like
+        <select id="elVoice">
+          <option value="cgSgspJ2msm6clMCkdW9">Jessica</option>
+          <option value="FGY2WhTYpPnrIDTdsKH5">Laura</option>
+          <option value="pFZP5JQG7iQjIQuC4Bkp">Lily</option>
+          <option value="IKne3meq5aSn9XLyUdCD">Charlie</option>
+          <option value="EXAVITQu4vr4xnSDxMaL">Sarah</option>
+          <option value="custom">Another voice (paste its voice ID)</option>
+        </select>
+      </label>
+      <input type="text" id="elCustom" placeholder="Voice ID from your ElevenLabs voice library" autocomplete="off" hidden>
+      <div class="row"><button type="button" class="btn primary" id="elTest">Test the voice</button></div>
+      <p id="elStatus"></p>
+    </div>
+    <div id="deviceBox">
+      <label for="voiceSel" id="voiceWrap">Voice <select id="voiceSel"></select></label>
+      <p>For a more natural device voice on iPhone or iPad: Settings → Accessibility → Spoken Content → Voices → English, download a voice marked Premium or Enhanced (for example Ava or Zoe), then reload Pip. Pip picks the best voice by itself.</p>
+    </div>
     <div class="speedrow" id="speedBtns" role="group" aria-label="How fast Pip talks"></div>
-    <label for="voiceSel" id="voiceWrap">Voice <select id="voiceSel"></select></label>
     <div class="row">
       <button class="iconbtn" id="muteBtn" type="button" aria-label="Turn Pip's voice off">
         <svg id="spkOn" viewBox="0 0 24 24" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-linecap="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#FFC93C"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg>
@@ -539,12 +580,23 @@ function flyStar(fromEl){
 const synth = window.speechSynthesis;
 const voiceSel = document.getElementById('voiceSel');
 let voices = [];
-const NICE = /(natural|neural|aria|jenny|ava|emma|samantha|google us english|google uk english female|serena|libby|sonia|karen|moira|tessa|zira)/i;
+// Apple's joke voices (Bubbles, Zarvox...) and the old robotic ones never get picked.
+const NOVELTY = /^(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|pipe organ|superstar|trinoids|whisper|wobble|zarvox|fred|junior|ralph|kathy|grandma|grandpa|eddy|flo|reed|rocko|sandy|shelley)\b/i;
+function voiceScore(v){
+  const n = v.name; let sc = 0;
+  if(/premium/i.test(n)) sc += 50; else if(/enhanced/i.test(n)) sc += 40;
+  if(/natural|neural|online/i.test(n)) sc += 35;
+  if(/google us english|google uk english female/i.test(n)) sc += 25;
+  if(/\b(ava|zoe|samantha|allison|susan|evan|nathan|joelle|noelle|nicky|aria|jenny|emma|libby|sonia|serena|karen|moira|tessa)\b/i.test(n)) sc += 15;
+  if(/en-US/i.test(v.lang)) sc += 3;
+  return sc;
+}
+const isRichVoice = v => !!v && /premium|enhanced|natural|neural|online/i.test(v.name);
 function loadVoices(){
   if(!synth) return;
-  voices = synth.getVoices().filter(v => /^en(-|_|$)/i.test(v.lang));
+  voices = synth.getVoices().filter(v => /^en(-|_|$)/i.test(v.lang) && !NOVELTY.test(v.name));
   if(!voices.length) return;
-  voices.sort((a,b)=> (NICE.test(b.name)-NICE.test(a.name)) || (/en-US/i.test(b.lang)-/en-US/i.test(a.lang)));
+  voices.sort((a, b) => voiceScore(b) - voiceScore(a));
   const saved = store.get('pip-voice');
   voiceSel.innerHTML = voices.map(v=>`<option value="${v.name.replace(/"/g,'&quot;')}">${v.name.replace(/Microsoft |Google /,'').slice(0,34)}</option>`).join('');
   if(saved && voices.some(v=>v.name===saved)) voiceSel.value = saved;
@@ -559,20 +611,40 @@ function sentencesOf(text){
   const clean = String(text).replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'').replace(/\s+/g,' ').trim();
   return (clean.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) || [clean]).map(s => s.trim()).filter(Boolean);
 }
-let speakToken = 0;
-function stopSpeaking(){ speakToken++; if(synth) synth.cancel(); setTalking(false); document.querySelectorAll('.seg.now').forEach(s=>s.classList.remove('now')); }
+let speakToken = 0, curSrc = null;
+function stopSpeaking(){
+  speakToken++;
+  if(synth) synth.cancel();
+  if(curSrc){ try{ curSrc.stop(); }catch(e){} curSrc = null; }
+  setTalking(false); document.querySelectorAll('.seg.now').forEach(s=>s.classList.remove('now'));
+}
 // Speak one sentence. Resolves true when it finished, false if Pip was interrupted.
-function speakOne(sentence, seg, token){
+// The natural voice is used when it's set up; the device voice fills in otherwise.
+async function speakOne(sentence, seg, token){
+  if(token !== speakToken) return false;
+  if(muted) return true;
+  if(naturalOn()){
+    const r = await playNatural(sentence, seg, token);
+    if(r !== null) return r;
+  }
+  const plain = stripTags(sentence);
+  if(!plain) return token === speakToken;
+  return speakDevice(plain, seg, token);
+}
+function speakDevice(sentence, seg, token){
   if(token !== speakToken) return Promise.resolve(false);
-  if(muted || !synth) return Promise.resolve(true);
-  const rate = SPEEDS[speedIdx].rate;
+  if(!synth) return Promise.resolve(true);
   const voice = voices.find(v => v.name === voiceSel.value) || voices[0];
   const end = sentence.replace(/["')\]]+$/,'').slice(-1);
+  // Lifelike voices sound best near their own pitch; small lifts and pace changes add feeling.
+  const basePitch = isRichVoice(voice) ? 1.0 : 1.08;
+  const wobble = (Math.random() - .5) * .06;
+  const rate = SPEEDS[speedIdx].rate * (end === '!' ? 1.05 : end === '?' ? 0.97 : 1);
   return new Promise(resolve => {
     const u = new SpeechSynthesisUtterance(sentence);
     if(voice) u.voice = voice;
     u.lang = voice ? voice.lang : 'en-US';
-    u.rate = rate; u.pitch = end === '?' ? 1.25 : end === '!' ? 1.2 : 1.1; u.volume = 1;
+    u.rate = rate; u.pitch = basePitch + (end === '?' ? .1 : end === '!' ? .08 : 0) + wobble; u.volume = 1;
     if(seg) seg.classList.add('now');
     u.onstart = () => setTalking(true);
     let done = false;
@@ -597,10 +669,174 @@ async function speak(text, bubble){
   const token = speakToken;
   const segs = bubble ? [...bubble.querySelectorAll('.seg')] : [];
   const list = sentencesOf(text);
+  if(naturalOn()) list.slice(1).forEach(x => elFetch(x).catch(() => {}));   // get the next sentences ready
   for(let i = 0; i < list.length; i++){
     if(!(await speakOne(list[i], segs[i] || null, token))) return false;
   }
   return true;
+}
+
+
+/* ---------- Natural voice (ElevenLabs, optional) ----------
+   Each sentence is turned into lifelike speech. Pip can use feeling tags like [excited] or
+   [giggles]. The next sentence is fetched while the current one plays, so there are no gaps.
+   If anything goes wrong, the device voice takes over straight away. */
+const EL_MODELS = ['eleven_v4_turbo', 'eleven_flash_v2_5'];   // most expressive real-time model, then the fast classic one
+const EL_SPEED = [0.7, 0.78, 0.88, 1.0, 1.12];
+let voiceMode = store.get('pip-voicemode') === 'natural' ? 'natural' : 'device';
+let elModelIdx = 0, elSendSpeed = true, elBroken = false;
+const elCache = new Map();
+const TAG_RE = /\[[a-z][a-z ]{1,24}\]/gi;
+function stripTags(t){ return String(t).replace(TAG_RE, '').replace(/\s+/g, ' ').trim(); }
+function elVoiceId(){ return store.get('pip-elvoice') || 'cgSgspJ2msm6clMCkdW9'; }
+function naturalOn(){ return voiceMode === 'natural' && !!store.get('pip-elkey') && !elBroken && !!actx; }
+function voiceTagRule(){
+  return naturalOn() && EL_MODELS[elModelIdx] !== 'eleven_flash_v2_5'
+    ? '- Pip\'s voice can act out feelings. You may start a sentence with ONE short sound tag in square brackets, like [excited], [giggles], [gasps], [whispers], [curious] or [laughs]. Use one or two per reply, never more.'
+    : '- Never use square brackets.';
+}
+function elFetch(text){
+  const key = text + '|' + elVoiceId() + '|' + speedIdx;
+  if(elCache.has(key)) return elCache.get(key);
+  const p = (async () => {
+    for(let tries = 0; tries < 4; tries++){
+      const model = EL_MODELS[elModelIdx];
+      const body = {text: model === 'eleven_flash_v2_5' ? stripTags(text) : text, model_id: model};
+      if(elSendSpeed) body.voice_settings = {speed: EL_SPEED[speedIdx]};
+      let r;
+      try{
+        r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(elVoiceId())}?output_format=mp3_44100_128`, {
+          method:'POST', headers:{'xi-api-key': store.get('pip-elkey') || '', 'content-type':'application/json', 'accept':'audio/mpeg'},
+          body: JSON.stringify(body)});
+      }catch(e){ throw {code:'network'}; }
+      if(r.ok){
+        const buf = await r.arrayBuffer();
+        return await new Promise((res, rej) => actx.decodeAudioData(buf, res, rej));
+      }
+      if(r.status === 401) throw {code:'bad_key'};
+      const mi = EL_MODELS.indexOf(model);
+      if(mi < elModelIdx) continue;                                           // another sentence already switched models
+      if(r.status === 400 || r.status === 422){
+        if(body.voice_settings){ elSendSpeed = false; continue; }           // this model doesn't take a speed setting
+        if(elModelIdx < EL_MODELS.length - 1){ elModelIdx++; continue; }     // try the classic model
+      }
+      if(r.status === 404 && elModelIdx < EL_MODELS.length - 1){ elModelIdx++; continue; }
+      throw {code: r.status === 429 ? 'busy' : 'failed', status: r.status};
+    }
+    throw {code:'failed'};
+  })();
+  elCache.set(key, p);
+  p.catch(() => elCache.delete(key));
+  if(elCache.size > 40) elCache.delete(elCache.keys().next().value);
+  return p;
+}
+function naturalFailed(e){
+  if(e.code !== 'busy') elBroken = true;     // stop trying for this visit; the device voice takes over
+  const msg = e.code === 'bad_key' ? 'ElevenLabs refused the key, or the account is out of credits.'
+    : e.code === 'network' ? "Pip couldn't reach ElevenLabs."
+    : e.code === 'busy' ? 'ElevenLabs is busy right now.'
+    : `ElevenLabs didn't accept the request (error ${e.status || ''}). Check the voice ID.`;
+  document.getElementById('elStatus').textContent = msg + ' Pip is using the device voice for now.';
+}
+// Resolves true (finished), false (interrupted), or null (couldn't play: use the device voice).
+async function playNatural(sentence, seg, token){
+  let buffer;
+  try{ buffer = await elFetch(sentence); }
+  catch(e){ naturalFailed(e); return null; }
+  if(token !== speakToken) return false;
+  if(actx.state !== 'running'){ try{ await Promise.race([actx.resume(), sleep(800)]); }catch(e){} }
+  if(actx.state !== 'running') return null;
+  return new Promise(resolve => {
+    const src = actx.createBufferSource();
+    src.buffer = buffer; src.connect(actx.destination);
+    curSrc = src;
+    if(seg) seg.classList.add('now');
+    setTalking(true);
+    let done = false;
+    const finish = () => {
+      if(done) return; done = true;
+      clearTimeout(guard);
+      if(curSrc === src) curSrc = null;
+      setTalking(false);
+      if(seg) seg.classList.remove('now');
+      if(token !== speakToken) return resolve(false);
+      const end = stripTags(sentence).slice(-1);
+      setTimeout(() => resolve(token === speakToken), end === '?' ? 220 : 140);
+    };
+    src.onended = finish;
+    const guard = setTimeout(() => { try{ src.stop(); }catch(e){} finish(); }, buffer.duration * 1000 + 2000);
+    src.start();
+  });
+}
+
+// Grown-up settings for the voice
+const voiceModeSel = document.getElementById('voiceMode');
+function paintVoiceMode(){
+  voiceModeSel.value = voiceMode;
+  document.getElementById('naturalBox').hidden = voiceMode !== 'natural';
+  document.getElementById('deviceBox').hidden = voiceMode === 'natural';
+  const st = document.getElementById('elStatus');
+  if(voiceMode === 'natural' && !store.get('pip-elkey')) st.textContent = 'Add your ElevenLabs key to turn on the natural voice.';
+  else if(voiceMode === 'natural' && !elBroken) st.textContent = 'Natural voice is on. Tap Test to hear it.';
+}
+function resetNatural(){ elBroken = false; elModelIdx = 0; elSendSpeed = true; elCache.clear(); }
+voiceModeSel.onchange = () => { voiceMode = voiceModeSel.value; store.set('pip-voicemode', voiceMode); resetNatural(); paintVoiceMode(); };
+document.getElementById('elSave').onclick = () => {
+  const k = document.getElementById('elKey').value.trim();
+  if(!k){ toast('Paste a key first.'); return; }
+  store.set('pip-elkey', k); document.getElementById('elKey').value = '';
+  resetNatural(); paintVoiceMode();
+  document.getElementById('elStatus').textContent = 'Key saved. Tap Test to hear Pip.';
+};
+document.getElementById('elClear').onclick = () => {
+  try{ localStorage.removeItem('pip-elkey'); }catch(e){}
+  resetNatural(); paintVoiceMode();
+};
+const elVoiceSel = document.getElementById('elVoice'), elCustom = document.getElementById('elCustom');
+(function initVoicePick(){
+  const v = store.get('pip-elvoice');
+  if(v && ![...elVoiceSel.options].some(o => o.value === v)){ elVoiceSel.value = 'custom'; elCustom.hidden = false; elCustom.value = v; }
+  else if(v) elVoiceSel.value = v;
+})();
+elVoiceSel.onchange = () => {
+  elCustom.hidden = elVoiceSel.value !== 'custom';
+  if(elVoiceSel.value !== 'custom'){ store.set('pip-elvoice', elVoiceSel.value); resetNatural(); }
+};
+elCustom.onchange = () => { const v = elCustom.value.trim(); if(v){ store.set('pip-elvoice', v); resetNatural(); } };
+document.getElementById('elTest').onclick = async () => {
+  audioUnlock(); resetNatural();
+  if(!store.get('pip-elkey')){ document.getElementById('elStatus').textContent = 'Save your ElevenLabs key first.'; return; }
+  voiceMode = 'natural'; store.set('pip-voicemode', 'natural');
+  stopSpeaking();
+  const token = speakToken;
+  document.getElementById('elStatus').textContent = 'Loading Pip\'s voice…';
+  const r = await playNatural("[excited] Hi! I'm Pip! I love hearing your stories. What should we talk about?", null, token);
+  if(r !== null) document.getElementById('elStatus').textContent = 'Sounds good? Pip will use this voice. (Model: ' + EL_MODELS[elModelIdx] + ')';
+};
+paintVoiceMode();
+
+/* ---------- Talk power: a meter that fills up as the child talks ---------- */
+const powerEl = document.getElementById('power');
+let powerN = 0;
+function resetPower(){ powerN = 0; updatePower(0); powerEl.hidden = !(micOK && !kbMode); }
+function updatePower(n){
+  const fill = Math.min(n / 8, 1);
+  document.getElementById('powerFill').style.width = (fill * 100) + '%';
+  const cls = n >= 8 ? 'super' : n >= 4 ? 'whole' : '';
+  const was = powerEl.classList.contains('super') ? 'super' : powerEl.classList.contains('whole') ? 'whole' : '';
+  powerEl.classList.remove('super', 'whole');
+  if(cls) powerEl.classList.add(cls);
+  document.getElementById('powerText').innerHTML =
+    n >= 8 ? STAR_SVG + STAR_SVG + 'Super sentence!'
+    : n >= 4 ? STAR_SVG + 'Whole sentence!'
+    : n >= 1 ? 'Keep going!' : 'Say it!';
+  if(cls !== was && cls){ powerEl.classList.remove('bump'); void powerEl.offsetWidth; powerEl.classList.add('bump'); }
+  if(n > powerN){
+    const p = document.getElementById('pipSmall');
+    p.classList.remove('nod'); void p.getBoundingClientRect(); p.classList.add('nod');
+    setTimeout(() => p.classList.remove('nod'), 320);
+  }
+  powerN = n;
 }
 
 /* ---------- Chat UI ---------- */
@@ -623,7 +859,7 @@ function newPipBubble(){
 }
 function addSeg(el, s){
   const seg = document.createElement('span');
-  seg.className = 'seg'; seg.textContent = s + ' ';
+  seg.className = 'seg'; seg.textContent = stripTags(s) + ' ';
   el.querySelector('.body').appendChild(seg); scrollDown();
   return seg;
 }
@@ -653,19 +889,22 @@ function addThinking(){
   chat.appendChild(el); scrollDown();
   return el;
 }
-function giveStar(fromEl){
-  stars++;
+function giveStar(fromEl, n){
+  n = n || 1;
   const e = document.createElement('div');
   e.className = 'earned';
-  e.innerHTML = STAR_SVG + 'Whole sentence! +1 star';
+  e.innerHTML = n > 1 ? STAR_SVG + STAR_SVG + 'Super sentence! +2 stars' : STAR_SVG + 'Whole sentence! +1 star';
   chat.appendChild(e); scrollDown();
-  flyStar(fromEl);
   let surprise = null;
-  if(stars % PER_SURPRISE === 0){
-    unlocked++;
-    surprise = unlocked <= ACC.length ? ACC[unlocked - 1] : {id:'super', name:''};
-    setTimeout(() => celebrate(surprise), 750);
-  } else sfx('star');
+  for(let k = 0; k < n; k++){
+    stars++;
+    setTimeout(() => flyStar(fromEl), k * 260);
+    if(stars % PER_SURPRISE === 0 && !surprise){
+      unlocked++;
+      surprise = unlocked <= ACC.length ? ACC[unlocked - 1] : {id:'super', name:''};
+    }
+  }
+  if(surprise){ const sp = surprise; setTimeout(() => celebrate(sp), 750); } else sfx('star');
   paintRewards(false);
   saveRewards();
   return surprise;
@@ -690,7 +929,7 @@ function showStarters(list){
       const t = s.replace(/\s*(\.{3}|…|_+)\s*$/,'').trim();
       if(micOK && !kbMode){
         if(!rec) startListening(false, true);
-        prefix = t; heard = t; starterText = t; showDraft(t); lastSpeechAt = Date.now(); onKidActivity();
+        prefix = t; heard = t; starterText = t; showDraft(t); updatePower(wordsOf(t).length); lastSpeechAt = Date.now(); onKidActivity();
         listenText.textContent = 'Now finish the sentence out loud!';
       } else {
         input.value = t + ' '; input.focus(); input.setSelectionRange(input.value.length, input.value.length); grow(); onKidActivity();
@@ -754,8 +993,12 @@ How to talk:
 - Vary how you start. Don't begin with these words again: ${recentOpeners.length ? recentOpeners.join(', ') : 'none yet'}.
 - Be interactive: every few turns do a mini-activity about the current topic: a would-you-rather, a one-line-each silly story, asking the child to teach you something, a pretend game, or a "what if". Keep it tied to the topic. If the child taps an activity button, do that activity about the current topic.
 - Give two fun choices inside the question when the child is quiet or unsure.
+- Make talking feel like a game the child is winning. Echo their best words back with big excitement ("A T-rex that eats pizza?! Whoa!"), and make them the expert ("You know so much about this!").
+- Ask questions that put a fun picture in their head: what would happen if, what does it look like, what sound does it make.
+- Now and then (not every turn), invite a playful way to answer: in a big lion voice, a tiny mouse whisper, super fast, or like a robot. Not when the child seems shy or sad.
 - Stay on a topic for 3 to 5 questions, then ask what else they love, or link to something they said they like.
 - Punctuation for natural speaking: "!" for excitement, "?" for questions. No emoji, no lists, no asterisks.
+${voiceTagRule()}
 - If the child answers with only yes, no, ok, maybe, idk, or one or two words: cheer warmly, then ask them to say it as a whole sentence and give one example sentence they could copy.
 - If the child answered in a whole sentence, praise it specifically now and then, not every time.
 - If the child seems sad, scared, hurt, or says something worrying, be gentle and kind, and suggest they tell a grown-up they trust. Never ask for last names, addresses, school names, phone numbers or passwords. Keep everything child-safe.
@@ -921,6 +1164,7 @@ function userContent(kidText, note){
 function noteFor(kidText, how, nudgeCount){
   let note = kidText != null && isShort(kidText) && how !== 'tap'
     ? 'This was a very short answer. Cheer, then kindly ask for a whole sentence and give one example sentence to copy.' : '';
+  if(kidText && how !== 'tap' && wordsOf(kidText).length >= 8) note += ' The child said a super long sentence. Celebrate how much they told you, in a few happy words.';
   if(how === 'tap') note += ' The child tapped an activity button; do this activity about the current topic.';
   if(how === 'voice' && lowConfidence) note += ' Speech-to-text was unsure about some of these words; if the meaning is unclear, kindly check what they said.';
   if(pendingUnlock) note += pendingUnlock.id === 'super'
@@ -974,6 +1218,7 @@ async function playJob(job, thinking){
     if(i < job.sentences.length){
       if(!el){ if(thinking) thinking.remove(); el = newPipBubble(); }
       const s = job.sentences[i++];
+      if(naturalOn() && job.sentences[i]) elFetch(job.sentences[i]).catch(() => {});   // next sentence, ready in time
       const ok = await speakOne(s, addSeg(el, s), token);
       if(!ok) return {el, interrupted: true};
       continue;
@@ -1065,10 +1310,10 @@ async function pipTurn(kidText, job){
     if(result){
       while(!used.done) await sleep(40);
       const say = used.sentences.join(' ') || used.say;
-      turns.push({role:'user', content: used.userMsg}, {role:'assistant', content: say});
+      turns.push({role:'user', content: used.userMsg}, {role:'assistant', content: stripTags(say)});
       if(turns.length > 30) turns = turns.slice(-30);
       applyMeta(used.meta);
-      recentOpeners = [...recentOpeners, say.split(/[\s,!.?]+/).slice(0, 1).join(' ')].filter(Boolean).slice(-4);
+      recentOpeners = [...recentOpeners, stripTags(say).split(/[\s,!.?]+/).slice(0, 1).join(' ')].filter(Boolean).slice(-4);
       finishBubble(result.el, say);
       lastStarters = Array.isArray(used.meta.starters) ? used.meta.starters.map(String) : [];
       pendingUnlock = null; returning = false; saveSession();
@@ -1130,6 +1375,7 @@ function startWaiting(){
   tickled = false; tapTimes = [];
   if(helpersShown){ showStarters(lastStarters); startersEl.hidden = false; document.getElementById('acts').hidden = !aiOn(); }
   setListeningFace(true);
+  resetPower();
   paintListen();
   if(autoMic){
     const d = sfx('turn');                       // a little "your turn" chime, then the mic opens
@@ -1143,6 +1389,7 @@ function endWaiting(){
   listenEl.hidden = true;
   startersEl.hidden = true;
   document.getElementById('acts').hidden = true;
+  powerEl.hidden = true;
   setListeningFace(false);
   stopListening();
 }
@@ -1150,7 +1397,7 @@ function armTimer(){
   clearTimeout(silenceTimer); silenceTimer = null;
   waitFill.style.transition = 'none'; waitFill.style.width = '100%';
   const on = waitSec > 0 && nudges < MAX_NUDGES;
-  waitBar.hidden = !on;
+  waitBar.hidden = !on || powerN > 0;   // no countdown while the child is talking
   if(!on) return;
   void waitFill.offsetWidth;
   waitFill.style.transition = `width ${waitSec}s linear`;
@@ -1186,10 +1433,10 @@ function nudge(){
   if(input.value.trim()){
     say = pick(["Ooh, great start! Tap Send when you are ready.", "I see your words! Keep going, then tap Send.", "Nice! Finish your sentence and send it to me."]);
   } else if(nudges === 1){
-    say = pick(["Your turn! I would love to hear you. Just talk, I'm listening!", "I'm all ears! What do you think?", "Take your time. I'm right here, listening!"])
+    say = pick(["[excited] Your turn! I can't wait to hear it!", "Ooh, I'm all ears! What do you think?", "[whispers] Psst... I'm listening. Tell me!"])
       + (starter ? ` You can start with, ${starter}...` : '');
   } else if(nudges === 2){
-    say = pick(["It's okay if you're not sure! Any answer is a good answer.", "There's no wrong answer, friend! Just tell me what you think.", "You can do it! Even a silly answer is great."])
+    say = pick(["[giggles] Any answer is a good answer, even a silly one!", "There's no wrong answer, friend! Tell me anything!", "You can do it! Say it loud like a lion!"])
       + (lastStarters.length ? " You can tap a helper button to start." : '');
   } else {
     const q = lastQuestion();
@@ -1209,7 +1456,7 @@ function sendText(t, how, job){
   input.value = ''; grow(); prevLen = 0; dictating = false;
   const kidEl = addKid(t);
   if(isWholeSentence(t) && how !== 'tap'){
-    const surprise = giveStar(kidEl);
+    const surprise = giveStar(kidEl, wordsOf(t).length >= 8 ? 2 : 1);
     if(surprise){ pendingUnlock = surprise; if(job){ job.ctl.abort(); job = null; } }   // Pip's reply should mention it
   }
   pipTurn(t, job);
@@ -1422,6 +1669,7 @@ function startListening(keepText, fromTap){
     const t = Date.now();
     if(heard !== lastHeard){ if(lastHeard && t - lastSpeechAt > 350) notePause(t - lastSpeechAt); lastHeard = heard; }
     showDraft(heard);
+    updatePower(wordsOf(heard).length);
     lastSpeechAt = t;
     onKidActivity();
   };
